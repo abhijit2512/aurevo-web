@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aurevo • Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <!-- Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body>
+  <!-- Colorful background blob -->
+  <div class="bg">
+    <div class="blob teal"></div>
+    <div class="blob orange"></div>
+  </div>
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-name">aurevo</span>
+      <i class="ri-play-fill brand-icon"></i>
+    </div>
+
+    <nav class="menu">
+      <a class="active"><i class="ri-home-4-line"></i> Home</a>
+      <a><i class="ri-movie-2-line"></i> All Video</a>
+      <a><i class="ri-upload-2-line"></i> My Uploads</a>
+    </nav>
+
+    <button class="btn btn-ghost" id="btnSignOut">
+      <i class="ri-logout-circle-line"></i> Sign Out
+    </button>
+  </aside>
+
+  <main class="content">
+    <header class="topbar">
+      <div class="role-pill">Creator/Admin</div>
+      <div class="search">
+        <i class="ri-search-2-line"></i>
+        <input id="search" placeholder="Dashboard" />
+      </div>
+      <div class="user">
+        <span class="user-name">Nom Yow</span>
+        <img class="avatar" src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=200&auto=format&fit=crop" alt="">
+        <button class="btn btn-primary" id="btnUpload"><i class="ri-add-line"></i> New</button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2>Dashboard</h2>
+
+      <div id="videoGrid" class="grid">
+        <!-- cards are injected by ui.js -->
+      </div>
+    </section>
+  </main>
+
+  <!-- Upload modal (placeholder) -->
+  <dialog id="uploadDlg" class="modal">
+    <form method="dialog" class="modal-body">
+      <h3>Upload video</h3>
+      <label class="field">
+        <span>Title</span>
+        <input id="upTitle" placeholder="My awesome video">
+      </label>
+      <label class="field">
+        <span>File</span>
+        <input id="upFile" type="file" accept="video/*">
+      </label>
+      <div class="modal-actions">
+        <button class="btn btn-ghost">Cancel</button>
+        <button class="btn btn-primary">Upload</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="ui.js" type="module"></script>
+</body>
+</html>
