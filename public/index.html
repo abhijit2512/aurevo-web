@@ -145,20 +145,19 @@
   <!-- Auth / App -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
-    // ===== MSAL config =====
-    const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72babec755dd";
+    // ===== MSAL config (Step-1: use 'common' authority to isolate issues) =====
+    const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72babec755dd";    // keep for later
     const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c";
 
-    // Optional B2C authority (leave empty if not using signup user flows)
-    const B2C_AUTHORITY = "";
+    const AUTHORITY   = "https://login.microsoftonline.com/common"; // <— diagnostic
     const AUTH_SCOPES = ["openid","profile","email"];
 
-    // Single instance
     const msalInstance = new msal.PublicClientApplication({
       auth: {
         clientId: CLIENT_ID,
-        authority: B2C_AUTHORITY || `https://login.microsoftonline.com/${TENANT_ID}`,
-        redirectUri: window.location.origin
+        authority: AUTHORITY,
+        redirectUri: window.location.origin,
+        navigateToLoginRequestUrl: false
       },
       cache: { cacheLocation: "localStorage" }
     });
@@ -174,9 +173,10 @@
 
     async function signIn(){
       try{
-        const login = await msalInstance.loginPopup({ scopes: AUTH_SCOPES, authority: msalInstance.getConfiguration().auth.authority });
+        const authority = msalInstance.getConfiguration().auth.authority;
+        const login = await msalInstance.loginPopup({ scopes: AUTH_SCOPES, authority });
         const account = login.account;
-        const token = await msalInstance.acquireTokenSilent({ account, scopes: AUTH_SCOPES, authority: msalInstance.getConfiguration().auth.authority });
+        const token = await msalInstance.acquireTokenSilent({ account, scopes: AUTH_SCOPES, authority });
         ID_TOKEN = token.idToken;
         localStorage.setItem(LS_KEY, ID_TOKEN);
         await refreshMe();
@@ -188,11 +188,8 @@
     }
 
     async function signUp(){
-      if (!B2C_AUTHORITY){
-        alert("Sign up requires Azure AD B2C. Falling back to Sign in.");
-        return signIn();
-      }
-      return signIn(); // with B2C authority already set above
+      // Using standard Entra ID without B2C; fallback to sign-in
+      return signIn();
     }
 
     async function signOut(){
