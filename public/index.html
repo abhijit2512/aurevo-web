@@ -3,78 +3,107 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Aurevo • Dashboard</title>
+  <title>Aurevo</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
-  <!-- Icons -->
+  <link rel="stylesheet" href="styles.css" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 </head>
 <body>
-  <!-- Colorful background blob -->
-  <div class="bg">
-    <div class="blob teal"></div>
-    <div class="blob orange"></div>
-  </div>
 
-  <aside class="sidebar">
+  <!-- Left Side Navigation -->
+  <aside class="sidenav">
     <div class="brand">
       <span class="brand-name">aurevo</span>
       <i class="ri-play-fill brand-icon"></i>
     </div>
 
-    <nav class="menu">
+    <nav class="nav">
       <a class="active"><i class="ri-home-4-line"></i> Home</a>
-      <a><i class="ri-movie-2-line"></i> All Video</a>
+      <a><i class="ri-movie-2-line"></i> All Videos</a>
       <a><i class="ri-upload-2-line"></i> My Uploads</a>
     </nav>
 
-    <button class="btn btn-ghost" id="btnSignOut">
-      <i class="ri-logout-circle-line"></i> Sign Out
+    <button class="btn btn-ghost signout">
+      <i class="ri-logout-circle-r-line"></i> Sign Out
     </button>
   </aside>
 
-  <main class="content">
+  <!-- Main area -->
+  <div class="main">
+
+    <!-- Top bar: right corner shows Creator/User -->
     <header class="topbar">
-      <div class="role-pill">Creator/Admin</div>
-      <div class="search">
-        <i class="ri-search-2-line"></i>
-        <input id="search" placeholder="Dashboard" />
-      </div>
-      <div class="user">
-        <span class="user-name">Nom Yow</span>
-        <img class="avatar" src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=200&auto=format&fit=crop" alt="">
-        <button class="btn btn-primary" id="btnUpload"><i class="ri-add-line"></i> New</button>
+      <div class="spacer"></div>
+
+      <div class="role">
+        <span id="roleLabel">Creator</span>
+        <button id="toggleRole" class="role-toggle" title="Switch role">
+          <i class="ri-exchange-line"></i>
+        </button>
+        <img class="avatar" src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=100&auto=format&fit=crop" alt="">
       </div>
     </header>
 
+    <!-- Search + action -->
+    <section class="actions">
+      <div class="search">
+        <i class="ri-search-2-line"></i>
+        <input placeholder="Search videos" />
+      </div>
+
+      <button class="btn btn-primary">
+        <i class="ri-add-line"></i> New
+      </button>
+    </section>
+
+    <!-- Dashboard -->
     <section class="panel">
       <h2>Dashboard</h2>
+      <div class="grid">
+        <!-- cards (examples) -->
+        <article class="card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=1200&auto=format&fit=crop" alt="">
+            <span class="play"><i class="ri-play-mini-fill"></i> 02:31</span>
+          </div>
+          <div class="meta">
+            <div class="title">Laugh Again</div>
+            <div class="sub">by Anna Brooks</div>
+          </div>
+        </article>
 
-      <div id="videoGrid" class="grid">
-        <!-- cards are injected by ui.js -->
+        <article class="card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1544006659-f0b21884ce1d?q=80&w=1200&auto=format&fit=crop" alt="">
+            <span class="play"><i class="ri-play-mini-fill"></i> 03:04</span>
+          </div>
+          <div class="meta">
+            <div class="title">Suit Up</div>
+            <div class="sub">by David Ko</div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="thumb">
+            <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop" alt="">
+            <span class="play"><i class="ri-play-mini-fill"></i> 01:58</span>
+          </div>
+          <div class="meta">
+            <div class="title">Sunset Vlog</div>
+            <div class="sub">by Mara</div>
+          </div>
+        </article>
       </div>
     </section>
-  </main>
+  </div>
 
-  <!-- Upload modal (placeholder) -->
-  <dialog id="uploadDlg" class="modal">
-    <form method="dialog" class="modal-body">
-      <h3>Upload video</h3>
-      <label class="field">
-        <span>Title</span>
-        <input id="upTitle" placeholder="My awesome video">
-      </label>
-      <label class="field">
-        <span>File</span>
-        <input id="upFile" type="file" accept="video/*">
-      </label>
-      <div class="modal-actions">
-        <button class="btn btn-ghost">Cancel</button>
-        <button class="btn btn-primary">Upload</button>
-      </div>
-    </form>
-  </dialog>
-
-  <script src="ui.js" type="module"></script>
+  <script>
+    // simple role toggle demo
+    const toggleBtn = document.getElementById('toggleRole');
+    const roleLabel = document.getElementById('roleLabel');
+    toggleBtn.addEventListener('click', () => {
+      roleLabel.textContent = roleLabel.textContent === 'Creator' ? 'User' : 'Creator';
+    });
+  </script>
 </body>
 </html>
