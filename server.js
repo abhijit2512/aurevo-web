@@ -1,27 +1,57 @@
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 import morgan from 'morgan';
 
-const app = express();
-const port = process.env.PORT || 8080;
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-app.use(cors());
+const app = express();
+const PORT = process.env.PORT || 3000;
+const PUBLIC = path.join(__dirname, 'public');
+
 app.use(morgan('tiny'));
+app.use(cors());
 app.use(express.json());
 
-// serve static files from /public
-app.use(express.static('public'));
+// ---- API ----
 
-// simple API health check
-app.get('/api/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    time: new Date().toISOString(),
-    app: process.env.WEBSITE_SITE_NAME || 'local'
-  });
+// temporary in-memory videos
+let videos = [
+  {
+    id: '1',
+    title: 'Welcome to aurevo',
+    publisher: 'aurevo',
+    playbackUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    createdAt: new Date().toISOString()
+  }
+];
+
+// GET /videos
+app.get('/videos', (req, res) => {
+  res.json(videos);
 });
 
-app.listen(port, () => {
-  console.log(`Aurevo server listening on ${port}`);
+// GET /me  (very simple demo; your real code should validate the MSAL id token)
+app.get('/me', (req, res) => {
+  // default to Guest/Consumer
+  const user = { name: 'Guest', role: 'Consumer' };
+  res.json({ user });
 });
 
+// POST /me/role  (demo only)
+app.post('/me/role', (req, res) => {
+  // persist to DB in a real app
+  res.json({ ok: true });
+});
+
+// ---- Static front-end ----
+app.use(express.static(PUBLIC, { extensions: ['html'] }));
+
+// Single Page App fallback
+app.get('*', (req, res) => {
+  res.sendFile(path.join(PUBLIC, 'index.html'));
+});
+
+app.listen(PORT, () => console.log(`aurevo listening on ${PORT}`));
