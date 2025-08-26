@@ -2,11 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Aurevo — Home</title>
+  <title>aurevo — Home</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/style.css?v=11" />
+  <link rel="stylesheet" href="/style.css?v=13" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
-
   <style>
     :root{
       --bg:#0b1120; --bg-2:#10172a;
@@ -22,21 +21,23 @@
     a{color:inherit;text-decoration:none}
 
     .shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+
+    /* ===== Sidebar ===== */
     .sidenav{position:sticky;top:0;align-self:start;background:var(--surface);border-right:1px solid var(--border);padding:20px 16px;min-height:100vh}
     .brand{display:flex;align-items:center;gap:.5rem;margin-bottom:14px;font-weight:800;letter-spacing:.3px;font-size:1.35rem}
     .brand i{color:var(--accent);font-size:1.5rem}
     .nav{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .nav a{display:flex;align-items:center;gap:.8rem;padding:12px 12px;border-radius:12px;color:var(--text)}
-    .nav a:hover{background:#0f1a36}
+    .nav a,.nav button{
+      display:flex;align-items:center;gap:.8rem;padding:12px 12px;border-radius:12px;color:var(--text);
+      background:transparent;border:0;cursor:pointer;font:inherit;text-align:left
+    }
+    .nav a:hover,.nav button:hover{background:#0f1a36}
     .nav a.active{background:var(--panel);box-shadow:var(--shadow)}
-    .nav .section{margin-top:10px;color:var(--muted);font-size:.85rem}
+    .nav .section{margin:8px 0 2px;color:var(--muted);font-size:.85rem}
+    .btn-accent{background:var(--accent);color:#111827;border-radius:10px;justify-content:center}
+    .btn-danger{background:var(--danger);color:#fff;border-radius:10px;justify-content:center}
 
-    .btn{display:inline-flex;gap:.45rem;align-items:center;padding:9px 12px;background:var(--primary);color:#fff;border:none;border-radius:10px;cursor:pointer;font-weight:600}
-    .btn:hover{filter:brightness(1.05)}
-    .btn.ghost{background:transparent;border:1px solid var(--outline)}
-    .btn.accent{background:var(--accent);color:#111827}
-    .btn.danger{background:var(--danger)}
-
+    /* ===== Main ===== */
     .main{min-width:0;display:flex;flex-direction:column}
     .topbar{display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:14px 18px;background:transparent;border-bottom:1px solid var(--border)}
     .rolebox{display:flex;align-items:center;gap:10px;background:var(--panel);padding:8px 10px;border-radius:999px;box-shadow:var(--shadow);font-weight:700}
@@ -52,7 +53,7 @@
       .shell{grid-template-columns:1fr}
       .sidenav{position:static;min-height:auto;border-right:none;border-bottom:1px solid var(--border)}
       .nav{flex-direction:row;flex-wrap:wrap}
-      .nav a{border-radius:8px}
+      .nav a,.nav button{border-radius:8px}
     }
   </style>
 </head>
@@ -67,11 +68,19 @@
       <nav class="nav">
         <a class="active"><i class="ri-home-4-line"></i> Home</a>
         <a href="/videos.html"><i class="ri-movie-2-line"></i> All Videos</a>
-        <!-- Hide "My Uploads" to ensure only one Upload entry -->
+
+        <!-- Hide “My Uploads” to keep a single upload entry point -->
         <a id="uploadLink" href="/upload.html" style="display:none"><i class="ri-upload-2-line"></i> My Uploads</a>
+
+        <div class="section">Creator</div>
+        <!-- SINGLE Upload button in sidebar (always visible; guarded on click) -->
+        <a id="sideUpload" href="/upload.html" class="btn-accent"><i class="ri-upload-2-line"></i> Upload</a>
+
         <div class="section">Account</div>
-        <a class="ghost" href="#" id="leftSignIn"><i class="ri-login-circle-line"></i> Sign in</a>
-        <a class="ghost" href="#" id="leftSignOut" style="display:none"><i class="ri-logout-circle-r-line"></i> Sign out</a>
+        <!-- Only one Sign in (shows when signed-out) -->
+        <a id="leftSignIn" href="#"><i class="ri-login-circle-line"></i> Sign in</a>
+        <!-- Sign out replaces Sign in when signed-in -->
+        <a id="leftSignOut" href="#" class="btn-danger" style="display:none"><i class="ri-logout-circle-r-line"></i> Sign out</a>
       </nav>
     </aside>
 
@@ -80,22 +89,12 @@
       <header class="topbar">
         <div class="rolebox">
           <span id="roleBadge">Guest</span>
-          <button id="btnRole" class="btn ghost" type="button" title="Switch role" style="display:none"><i class="ri-exchange-line"></i></button>
+          <button id="btnRole" class="nav" type="button" title="Switch role" style="display:none">
+            <i class="ri-exchange-line"></i><span>Switch</span>
+          </button>
           <img class="avatar" src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=100&auto=format&fit=crop" alt="">
         </div>
-
-        <!-- Single Upload button in navbar (always visible; click-guarded) -->
-        <a id="btnUploadNav" class="btn ghost" href="/upload.html">
-          <i class="ri-upload-2-line"></i> Upload
-        </a>
-
-        <!-- Sign up (shows when signed out) -->
-        <button id="btnSignUp" class="btn ghost" type="button" style="display:none">
-          <i class="ri-user-add-line"></i> Sign up
-        </button>
-
-        <button id="btnSignIn"  class="btn accent"  type="button">Sign in</button>
-        <button id="btnSignOut" class="btn danger"  type="button" style="display:none">Sign out</button>
+        <!-- NOTE: No Upload / SignIn / SignOut in topbar anymore -->
       </header>
 
       <main class="container">
@@ -125,10 +124,6 @@
     const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72baebc755dd";
     const CLIENT_ID = "e20305aa-c3a6-438e-80a0-6e0e92434fc2";
 
-    // Optional B2C setup for self-service sign-up (set USE_B2C=true and fill B2C_AUTHORITY)
-    const USE_B2C = false;
-    const B2C_AUTHORITY = "https://YOUR_B2C_TENANT.b2clogin.com/YOUR_B2C_TENANT.onmicrosoft.com/B2C_1_signup_signin";
-
     const msalInstance = new msal.PublicClientApplication({
       auth: { clientId: CLIENT_ID, authority: `https://login.microsoftonline.com/${TENANT_ID}`, redirectUri: window.location.origin },
       cache: { cacheLocation: "localStorage" }
@@ -146,7 +141,8 @@
     async function signIn(){
       try{
         const login = await msalInstance.loginPopup({ scopes:["openid","profile","email"] });
-        const token = await msalInstance.acquireTokenSilent({ account: login.account, scopes:["openid","profile","email"] });
+        const account = login.account;
+        const token = await msalInstance.acquireTokenSilent({ account, scopes:["openid","profile","email"] });
         ID_TOKEN = token.idToken;
         localStorage.setItem(LS_KEY, ID_TOKEN);
         await refreshMe();
@@ -165,35 +161,12 @@
       renderAuthUI();
     }
 
-    async function signUp(){
-      try{
-        if (USE_B2C && B2C_AUTHORITY.startsWith("https://")){
-          const login = await msalInstance.loginPopup({
-            authority: B2C_AUTHORITY,
-            scopes: ["openid","profile","email"],
-          });
-          const token = await msalInstance.acquireTokenSilent({
-            authority: B2C_AUTHORITY,
-            account: login.account,
-            scopes: ["openid","profile","email"],
-          });
-          ID_TOKEN = token.idToken;
-          localStorage.setItem(LS_KEY, ID_TOKEN);
-          await refreshMe();
-          renderAuthUI();
-        } else {
-          // Fallback if you don't have B2C set up yet
-          window.open("https://signup.live.com/", "_blank");
-        }
-      }catch(e){
-        alert("Sign-up failed: "+(e.message||e));
-      }
-    }
-
     async function refreshMe(){
       try{
         const res = await fetch("/me", { headers: authz({ "Accept":"application/json" }) });
-        ME = res.ok ? (await res.json()).user : null;
+        if (!res.ok){ ME=null; return; }
+        const data = await res.json();
+        ME = data.user || null;
       }catch{ ME=null; }
     }
 
@@ -201,17 +174,12 @@
       if (!ME) return alert("Sign in first.");
       const target = (ME.role === "Creator") ? "Consumer" : "Creator";
       try{
-        const res = await fetch("/me/role", {
-          method:"POST",
-          headers: authz({ "Content-Type":"application/json" }),
-          body: JSON.stringify({ role: target })
-        });
+        const res = await fetch("/me/role", { method:"POST", headers: authz({ "Content-Type":"application/json" }), body: JSON.stringify({ role: target }) });
         if (!res.ok){ return alert("Role change failed: " + await res.text()); }
         await refreshMe(); renderAuthUI();
       }catch(e){ alert("Role change failed: " + e.message); }
     }
 
-    // === UI state ===
     function renderAuthUI(){
       const signed = !!(ID_TOKEN || localStorage.getItem(LS_KEY));
       const role = ME?.role || "Guest";
@@ -219,15 +187,10 @@
 
       document.getElementById("roleBadge").textContent = role;
 
-      // top buttons
-      document.getElementById("btnSignIn").style.display  = signed ? "none" : "inline-flex";
-      document.getElementById("btnSignOut").style.display = signed ? "inline-flex" : "none";
-      document.getElementById("btnRole").style.display    = signed ? "inline-flex" : "none";
+      // top role switcher visibility
+      document.getElementById("btnRole").style.display = signed ? "inline-flex" : "none";
 
-      const su = document.getElementById("btnSignUp");
-      if (su) su.style.display = signed ? "none" : "inline-flex";
-
-      // ensure sidebar auth links reflect state
+      // left auth links
       document.getElementById("leftSignIn").style.display  = signed ? "none" : "inline-flex";
       document.getElementById("leftSignOut").style.display = signed ? "inline-flex" : "none";
 
@@ -246,14 +209,11 @@
       return true;
     }
 
-    // wire up
-    document.getElementById("btnSignIn").addEventListener("click", signIn);
-    document.getElementById("btnSignOut").addEventListener("click", signOut);
+    // wire up (sidebar only)
+    document.getElementById("leftSignIn").addEventListener("click", (e)=>{e.preventDefault(); signIn();});
+    document.getElementById("leftSignOut").addEventListener("click", (e)=>{e.preventDefault(); signOut();});
     document.getElementById("btnRole").addEventListener("click", switchRole);
-    document.getElementById("btnSignUp").addEventListener("click", signUp);
-
-    // single Upload entry point
-    document.getElementById("btnUploadNav").addEventListener("click", (e)=>{ requireCreator(e); });
+    document.getElementById("sideUpload").addEventListener("click", (e)=>{ requireCreator(e); });
 
     // boot
     (async ()=>{ renderAuthUI(); if (ID_TOKEN){ await refreshMe(); renderAuthUI(); } })();
