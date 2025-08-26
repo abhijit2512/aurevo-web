@@ -161,8 +161,17 @@
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
     /* ===== MSAL config – replace with your real values ===== */
-    const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72baebc755dd";
-    const CLIENT_ID = "e20305aa-c3a6-438e-80a0-6e0e92434fc2";
+    const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72babec755dd";
+    const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c";
+
+    const msalInstance = new msal.PublicClientApplication({
+  auth: {
+    clientId: CLIENT_ID,
+    authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+    redirectUri: window.location.origin
+  },
+  cache: { cacheLocation: "localStorage" }
+});
 
     /* ===== Optional Azure AD B2C (for real self-service Sign up) =====
        Example Authority:
