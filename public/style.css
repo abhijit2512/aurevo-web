@@ -99,9 +99,16 @@ body.nav-open .scrim { display:block; }
 
 .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px }
 .card {
-  background:#fff; border-radius:16px; box-shadow:var(--shadow); overflow:hidden;
-  display:flex; flex-direction:column;
+  background:#1a2238;   /* darker bluish panel */
+  border-radius:20px;
+  box-shadow:0 12px 28px rgba(0,0,0,.35);
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  min-height:180px;     /* make them a bit longer */
+  padding:20px;         /* breathing space inside */
 }
+
 .player { width:100%; aspect-ratio:16/9; border-radius:12px }
 
 .meta { padding:12px 14px 14px }
