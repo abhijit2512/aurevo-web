@@ -4,7 +4,6 @@
   <meta charset="utf-8" />
   <title>aurevo — Home</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <!-- If you already have /style.css keep it; this page is self-styled too -->
   <link rel="stylesheet" href="/style.css?v=9" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 
@@ -128,6 +127,12 @@
           <button id="btnRole" class="btn ghost" type="button" title="Switch role" style="display:none"><i class="ri-exchange-line"></i></button>
           <img class="avatar" src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=100&auto=format&fit=crop" alt="">
         </div>
+
+        <!-- Upload button in navbar (shows for Creator role) -->
+        <a id="btnUploadNav" class="btn ghost" href="/upload.html" style="display:none">
+          <i class="ri-upload-2-line"></i> Upload
+        </a>
+
         <button id="btnSignIn"  class="btn accent"  type="button">Sign in</button>
         <button id="btnSignOut" class="btn danger"  type="button" style="display:none">Sign out</button>
       </header>
@@ -236,10 +241,11 @@
       document.getElementById("leftSignIn").style.display  = signed ? "none" : "inline-flex";
       document.getElementById("leftSignOut").style.display = signed ? "inline-flex" : "none";
 
-      // upload visibility (left + hero)
+      // upload visibility (left + hero + navbar)
       document.getElementById("uploadLink").style.display   = showUpload ? "inline-flex" : "none";
       document.getElementById("ctaUpload").style.display     = showUpload ? "inline-flex" : "none";
       document.getElementById("ctaUploadTop").style.display  = showUpload ? "inline-flex" : "none";
+      document.getElementById("btnUploadNav").style.display  = showUpload ? "inline-flex" : "none";
 
       document.getElementById("authMsg").textContent =
         signed ? (showUpload ? "You can upload videos." : "Switch to Creator to upload.")
