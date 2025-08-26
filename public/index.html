@@ -2,159 +2,165 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Inspira — Home</title>
+  <title>aurevo — Home</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/style.css?v=8" />
+  <!-- If you already have /style.css keep it; this page is self-styled too -->
+  <link rel="stylesheet" href="/style.css?v=9" />
+  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
   <style>
-    /* Brand palette (your existing colors) */
+    /* ===== Brand dark theme (close to your Inspira page) ===== */
     :root{
-      --brand-bg:linear-gradient(180deg, var(--bg, #0b1224), var(--bg-2, #0c1430));
-      --brand-card:#10172a;
-      --brand-text:#e8eefc;
-      --brand-muted:#a9b6d3;
-      --brand-primary:#db144c;  /* deep pink */
-      --brand-accent:#f59e0b;   /* gold */
-      --brand-danger:#b91c1c;
-      --brand-outline:#28427a;
-
-      /* layout */
-      --nav-w:260px;
-      --panel-shadow:0 10px 24px rgba(0,0,0,.25);
-      --radius:14px;
+      --bg:#0b1120;            /* dark navy */
+      --bg-2:#10172a;
+      --panel:#111827;
+      --surface:#0e1530;
+      --text:#e8eefc;
+      --muted:#a9b6d3;
+      --primary:#db144c;       /* deep pink */
+      --accent:#f59e0b;        /* gold */
+      --danger:#b91c1c;
+      --outline:#28427a;
+      --border:#1e2a46;
+      --shadow:0 10px 26px rgba(0,0,0,.45);
+      --r:14px;
     }
+    *,*:before,*:after{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),var(--bg-2));color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Poppins',Arial,sans-serif}
+    a{color:inherit;text-decoration:none}
 
-    body{ background:var(--brand-bg); color:var(--brand-text); margin:0; }
-
-    /* ===== LEFT SIDEBAR NAV ===== */
+    /* ===== Left Sidebar ===== */
+    .shell{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
     .sidenav{
-      position:fixed; inset:0 auto 0 0; width:var(--nav-w);
-      background:#0e1530; border-right:1px solid #1e2a46;
-      display:flex; flex-direction:column; gap:14px; padding:18px 14px;
+      position:sticky; top:0; align-self:start;
+      background:var(--surface); border-right:1px solid var(--border);
+      padding:20px 16px; min-height:100vh;
     }
     .brand{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:6px 4px 14px; border-bottom:1px solid #1e2a46;
+      display:flex; align-items:center; gap:.5rem; margin-bottom:14px;
+      font-weight:800; letter-spacing:.3px; font-size:1.35rem;
     }
-    .brand a{ color:inherit; text-decoration:none; font-weight:800; font-size:20px; letter-spacing:.3px; }
-    .brand .badge{ margin-left:auto; }
-
-    .menu{ display:flex; flex-direction:column; gap:8px; padding-top:10px; }
-    .menu a{
-      display:flex; align-items:center; gap:10px; padding:12px 12px;
-      color:inherit; text-decoration:none; background:#0f1834; border:1px solid #1b2850;
-      border-radius:12px; transition:.15s ease;
+    .brand i{color:var(--accent);font-size:1.5rem}
+    .nav{
+      display:flex; flex-direction:column; gap:8px; margin-top:8px;
     }
-    .menu a:hover{ filter:brightness(1.05); }
-    .menu a.active{ background:#101a3c; border-color:#2b4fa1; }
-
-    .sidenav .signout{ margin-top:auto; }
-
-    /* ===== MAIN AREA ===== */
-    .page{
-      margin-left:var(--nav-w); min-height:100vh; display:flex; flex-direction:column;
+    .nav a{
+      display:flex; align-items:center; gap:.8rem; padding:12px 12px;
+      border-radius:12px; color:var(--text);
     }
+    .nav a:hover{background:#0f1a36}
+    .nav a.active{background:var(--panel); box-shadow:var(--shadow)}
+    .nav .section{margin-top:10px; color:var(--muted); font-size:.85rem}
 
-    /* Top bar with role controls on right */
+    .btn{
+      display:inline-flex; gap:.45rem; align-items:center;
+      padding:9px 12px; background:var(--primary); color:#fff; border:none;
+      border-radius:10px; cursor:pointer; font-weight:600;
+    }
+    .btn:hover{filter:brightness(1.05)}
+    .btn.ghost{background:transparent;border:1px solid var(--outline)}
+    .btn.accent{background:var(--accent); color:#111827}
+    .btn.danger{background:var(--danger)}
+    .btn.full{width:100%; justify-content:center}
+
+    .sidenav .actions{margin-top:auto; display:grid; gap:8px; padding-top:16px}
+
+    /* ===== Main content ===== */
+    .main{min-width:0; display:flex; flex-direction:column}
     .topbar{
-      height:64px; display:flex; align-items:center; justify-content:flex-end;
-      padding:10px 16px; border-bottom:1px solid #1e2a46; background:#0e1530;
+      display:flex; align-items:center; gap:10px; justify-content:flex-end;
+      padding:14px 18px; background:transparent; border-bottom:1px solid var(--border);
     }
-    .rolewrap{ display:flex; align-items:center; gap:10px; }
-    .avatar{ width:34px; height:34px; border-radius:50%; object-fit:cover; box-shadow:var(--panel-shadow); }
-
-    /* Card + layout utilities (kept from your design) */
-    .container{ max-width:1080px; margin:22px auto; padding:0 16px; }
-    .card{ background:var(--brand-card); border:1px solid #1e2a46; border-radius:var(--radius); padding:16px; box-shadow:var(--panel-shadow); }
-    .grid-cards{ display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
-    .player{ width:100%; aspect-ratio:16/9; border-radius:12px; }
-    .footer{ text-align:center; color:var(--brand-muted); padding:24px 12px; border-top:1px solid #1e2a46; margin-top:28px; }
-
-    .muted{ color:var(--brand-muted); }
-    .badge{ font-size:12px; padding:2px 8px; background:#13213b; color:var(--brand-muted); border-radius:999px; border:1px solid #1e2a46; }
-    .btn{ padding:8px 12px; background:var(--brand-primary); color:#fff; border-radius:8px; text-decoration:none; display:inline-flex; gap:6px; align-items:center; border:none; cursor:pointer; }
-    .btn:hover{ filter:brightness(1.05); }
-    .btn-outline{ background:transparent; border:1px solid var(--brand-outline); color:var(--brand-text); }
-    .btn.accent{ background:var(--brand-accent); color:#111827; }
-    .btn.danger{ background:var(--brand-danger); }
-
-    /* responsive: stack nav for small screens if needed */
-    @media (max-width: 840px){
-      :root{ --nav-w: 92px; }
-      .sidenav{ align-items:center; }
-      .brand a{ font-size:18px; }
-      .menu a{ width:100%; justify-content:center; }
-      .menu a span{ display:none; } /* hide labels on narrow */
+    .rolebox{
+      display:flex; align-items:center; gap:10px;
+      background:var(--panel); padding:8px 10px; border-radius:999px; box-shadow:var(--shadow);
+      font-weight:700;
     }
-    @media (max-width: 620px){
-      .sidenav{ position:sticky; width:100%; height:auto; inset:auto 0 auto 0; border-right:none; border-bottom:1px solid #1e2a46; }
-      .page{ margin-left:0; }
+    .rolebox .avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}
+    .container{max-width:1100px;margin:20px auto;padding:0 18px}
+    .card{background:var(--panel); border:1px solid var(--border); border-radius:var(--r); padding:16px; box-shadow:var(--shadow)}
+    .muted{color:var(--muted)}
+
+    .actionsRow{display:flex; gap:10px; margin-top:10px}
+    .grid-cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px}
+    .player{width:100%; aspect-ratio:16/9; border-radius:12px}
+    .footer{color:var(--muted); text-align:center; padding:24px 12px; border-top:1px solid var(--border); margin-top:26px}
+
+    /* Responsive: collapse nav on small screens (optional) */
+    @media (max-width: 860px){
+      .shell{grid-template-columns:1fr}
+      .sidenav{position:static; min-height:auto; border-right:none; border-bottom:1px solid var(--border)}
+      .nav{flex-direction:row; flex-wrap:wrap}
+      .nav a{border-radius:8px}
+      .sidenav .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
     }
   </style>
-  <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 </head>
 <body>
-
-  <!-- ===== LEFT NAVIGATION ===== -->
-  <aside class="sidenav">
-    <div class="brand">
-      <a href="/">Inspira</a>
-      <span class="badge" id="roleBadge">Guest</span>
-    </div>
-
-    <nav class="menu">
-      <a class="active" href="/"><i class="ri-home-4-line"></i><span>Home</span></a>
-      <a href="/videos.html"><i class="ri-movie-2-line"></i><span>All Videos</span></a>
-      <a id="uploadLink" href="/upload.html" style="display:none"><i class="ri-upload-2-line"></i><span>Upload</span></a>
-    </nav>
-
-    <div class="signout">
-      <button id="btnSignIn"  class="btn accent" style="width:100%">Sign in</button>
-      <div style="display:flex; gap:8px; margin-top:8px;">
-        <button id="btnRole"    class="btn"        style="display:none; width:100%" title="Switch between Consumer and Creator">Switch Role</button>
-        <button id="btnSignOut" class="btn danger" style="display:none; width:100%">Sign out</button>
+  <div class="shell">
+    <!-- ========== LEFT NAV ========== -->
+    <aside class="sidenav">
+      <div class="brand">
+        <span>aurevo</span> <i class="ri-play-fill"></i>
       </div>
-    </div>
-  </aside>
 
-  <!-- ===== MAIN CONTENT AREA ===== -->
-  <div class="page">
+      <nav class="nav">
+        <a class="active"><i class="ri-home-4-line"></i> Home</a>
+        <a href="/videos.html"><i class="ri-movie-2-line"></i> All Videos</a>
+        <a id="uploadLink" href="/upload.html" style="display:none"><i class="ri-upload-2-line"></i> My Uploads</a>
+        <div class="section">Account</div>
+        <a class="ghost" href="#" id="leftSignIn"><i class="ri-login-circle-line"></i> Sign in</a>
+      </nav>
 
-    <header class="topbar">
-      <div class="rolewrap">
-        <!-- keep role controls in top-right as well if you want both -->
-        <img class="avatar" src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=100&auto=format&fit=crop" alt="">
+      <div class="actions">
+        <button class="btn full accent" id="ctaUpload" style="display:none"><i class="ri-add-line"></i> Upload</button>
+        <button class="btn full danger" id="leftSignOut" style="display:none"><i class="ri-logout-circle-r-line"></i> Sign out</button>
       </div>
-    </header>
+    </aside>
 
-    <main class="container">
-      <section class="hero card">
-        <h2 style="margin:0 0 8px">Welcome to Inspira</h2>
-        <p class="muted" style="margin:0">
-          Explore the latest learning videos. Creators can upload with title, publisher, producer, genre, and age rating.
-        </p>
-        <div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap">
-          <a class="btn" href="/videos.html">Browse All</a>
-          <a class="btn btn-outline" id="ctaUpload" href="/upload.html" style="display:none">Upload</a>
+    <!-- ========== MAIN CONTENT ========== -->
+    <div class="main">
+      <!-- top right: role + quick auth buttons -->
+      <header class="topbar">
+        <div class="rolebox">
+          <span id="roleBadge">Guest</span>
+          <button id="btnRole" class="btn ghost" type="button" title="Switch role" style="display:none"><i class="ri-exchange-line"></i></button>
+          <img class="avatar" src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=100&auto=format&fit=crop" alt="">
         </div>
-        <p id="authMsg" class="muted" style="margin-top:8px"></p>
-      </section>
+        <button id="btnSignIn"  class="btn accent"  type="button">Sign in</button>
+        <button id="btnSignOut" class="btn danger"  type="button" style="display:none">Sign out</button>
+      </header>
 
-      <section class="card">
-        <h2 style="margin-top:0">Latest videos</h2>
-        <div id="latest" class="grid-cards"></div>
-        <p id="latestStatus" class="muted"></p>
-      </section>
-    </main>
+      <main class="container">
+        <section class="card">
+          <h2 style="margin:0 0 8px">Welcome to aurevo</h2>
+          <p class="muted" style="margin:0">
+            Explore the latest videos. Creators can upload with Title, Publisher, Producer, Genre and Age rating.
+          </p>
+          <div class="actionsRow">
+            <a class="btn" href="/videos.html"><i class="ri-play-circle-line"></i> Browse All</a>
+            <!-- this CTA mirrors the uploadLink visibility -->
+            <a class="btn ghost" id="ctaUploadTop" href="/upload.html" style="display:none"><i class="ri-upload-cloud-2-line"></i> Upload</a>
+          </div>
+          <p id="authMsg" class="muted" style="margin-top:8px"></p>
+        </section>
 
-    <footer class="footer">© Inspira</footer>
+        <section class="card" style="margin-top:14px">
+          <h2 style="margin-top:0">Latest videos</h2>
+          <div id="latest" class="grid-cards"></div>
+          <p id="latestStatus" class="muted"></p>
+        </section>
+      </main>
+
+      <footer class="footer">© aurevo</footer>
+    </div>
   </div>
 
-  <!-- MSAL (browser) -->
+  <!-- ========== AUTH / APP SCRIPTS ========== -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
-    /***********************
-     * 1) MSAL config
-     ***********************/
+    /* MSAL config – replace with your real values */
     const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72baebc755dd";
     const CLIENT_ID = "e20305aa-c3a6-438e-80a0-6e0e92434fc2";
 
@@ -163,20 +169,17 @@
       cache: { cacheLocation: "localStorage" }
     });
 
-    const LS_KEY = "INSPIRA_ID_TOKEN";
+    const LS_KEY = "AUREVO_ID_TOKEN";
     let ID_TOKEN = localStorage.getItem(LS_KEY) || null;
-    let ME = null; // { email, name, role }
+    let ME = null; // { name, email, role }
 
-    function authz(extra = {}) {
+    function authz(extra={}) {
       const t = ID_TOKEN || localStorage.getItem(LS_KEY) || "";
       return t ? { ...extra, Authorization: `Bearer ${t}` } : extra;
     }
 
-    /***********************
-     * 2) Sign in / out
-     ***********************/
     async function signIn(){
-      try {
+      try{
         const login = await msalInstance.loginPopup({ scopes:["openid","profile","email"] });
         const account = login.account;
         const token = await msalInstance.acquireTokenSilent({ account, scopes:["openid","profile","email"] });
@@ -184,86 +187,79 @@
         localStorage.setItem(LS_KEY, ID_TOKEN);
         await refreshMe();
         renderAuthUI();
-      } catch (e) {
+      }catch(e){
         console.error(e);
         document.getElementById("authMsg").textContent = "Sign in failed: " + (e.message||e);
       }
     }
-
     async function signOut(){
-      try {
+      try{
         const account = msalInstance.getAllAccounts()[0];
-        localStorage.removeItem(LS_KEY);
-        ID_TOKEN = null; ME = null;
+        localStorage.removeItem(LS_KEY); ID_TOKEN=null; ME=null;
         await msalInstance.logoutPopup({ account });
-      } catch {}
+      }catch{}
       renderAuthUI();
     }
 
-    /***********************
-     * 3) Role: fetch & switch
-     ***********************/
     async function refreshMe(){
       try{
         const res = await fetch("/me", { headers: authz({ "Accept":"application/json" }) });
-        if (!res.ok) { ME = null; return; }
+        if (!res.ok){ ME=null; return; }
         const data = await res.json();
         ME = data.user || null;
-      }catch{ ME = null; }
+      }catch{ ME=null; }
     }
 
     async function switchRole(){
       if (!ME) return alert("Sign in first.");
-      const target = ME.role === "Creator" ? "Consumer" : "Creator";
+      const target = (ME.role === "Creator") ? "Consumer" : "Creator";
       try{
-        const res = await fetch("/me/role", {
-          method: "POST",
-          headers: authz({ "Content-Type":"application/json" }),
-          body: JSON.stringify({ role: target })
-        });
-        if (!res.ok) {
-          const t = await res.text();
-          alert("Role change failed: " + t);
-          return;
-        }
-        await refreshMe();
-        renderAuthUI();
+        const res = await fetch("/me/role", { method:"POST", headers: authz({ "Content-Type":"application/json" }), body: JSON.stringify({ role: target }) });
+        if (!res.ok){ return alert("Role change failed: " + await res.text()); }
+        await refreshMe(); renderAuthUI();
       }catch(e){ alert("Role change failed: " + e.message); }
     }
 
     function renderAuthUI(){
       const signed = !!(ID_TOKEN || localStorage.getItem(LS_KEY));
       const role = ME?.role || "Guest";
+      const showUpload = (role === "Creator");
+
       document.getElementById("roleBadge").textContent = role;
 
+      // top buttons
       document.getElementById("btnSignIn").style.display  = signed ? "none" : "inline-flex";
       document.getElementById("btnSignOut").style.display = signed ? "inline-flex" : "none";
       document.getElementById("btnRole").style.display    = signed ? "inline-flex" : "none";
 
-      // Only Creators see Upload links
-      const showUpload = (role === "Creator");
-      document.getElementById("uploadLink").style.display = showUpload ? "inline-flex" : "none";
-      document.getElementById("ctaUpload").style.display  = showUpload ? "inline-flex" : "none";
+      // left quick buttons
+      document.getElementById("leftSignIn").style.display  = signed ? "none" : "inline-flex";
+      document.getElementById("leftSignOut").style.display = signed ? "inline-flex" : "none";
 
-      // helper message
+      // upload visibility (left + hero)
+      document.getElementById("uploadLink").style.display   = showUpload ? "inline-flex" : "none";
+      document.getElementById("ctaUpload").style.display     = showUpload ? "inline-flex" : "none";
+      document.getElementById("ctaUploadTop").style.display  = showUpload ? "inline-flex" : "none";
+
       document.getElementById("authMsg").textContent =
         signed ? (showUpload ? "You can upload videos." : "Switch to Creator to upload.")
                : "Sign in to rate, comment, or upload.";
     }
 
-    // wire buttons on the sidebar
+    // wire up buttons (top + left)
     document.getElementById("btnSignIn").addEventListener("click", signIn);
     document.getElementById("btnSignOut").addEventListener("click", signOut);
     document.getElementById("btnRole").addEventListener("click", switchRole);
+    document.getElementById("leftSignIn").addEventListener("click", (e)=>{e.preventDefault(); signIn();});
+    document.getElementById("leftSignOut").addEventListener("click", (e)=>{e.preventDefault(); signOut();});
+    document.getElementById("ctaUpload").addEventListener("click", ()=> location.href="/upload.html");
 
     // boot
-    (async ()=>{ renderAuthUI(); if (ID_TOKEN) { await refreshMe(); renderAuthUI(); } })();
+    (async ()=>{ renderAuthUI(); if (ID_TOKEN){ await refreshMe(); renderAuthUI(); } })();
   </script>
 
   <script>
-    /***********************
-     * Latest videos
-     ***********************/
+    /* ===== Latest videos section ===== */
     const esc = (s='') => String(s)
       .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
       .replaceAll('"','&quot;').replaceAll("'","&#39;");
@@ -280,7 +276,6 @@
       }catch{}
       return null;
     }
-
     function ytEmbed(id){
       const src = `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&playsinline=1`;
       return `<iframe class="player" src="${src}" title="YouTube player" frameborder="0"
@@ -293,28 +288,21 @@
       const status = document.getElementById('latestStatus');
 
       const latest = (Array.isArray(items)?items:[])
-        .slice().sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))
+        .slice()
+        .sort((a,b)=>new Date(b.createdAt||0)-new Date(a.createdAt||0))
         .slice(0,6);
 
-      if (!latest.length){
-        status.textContent = 'No videos yet.';
-        box.innerHTML = '';
-        return;
-      }
+      if (!latest.length){ status.textContent='No videos yet.'; box.innerHTML=''; return; }
 
-      status.textContent = '';
+      status.textContent='';
       box.innerHTML = latest.map(v=>{
         const id = ytId(v.playbackUrl||'');
-        const player = id
-          ? ytEmbed(id)
-          : (v.playbackUrl
-              ? `<video class="player" src="${esc(v.playbackUrl)}" controls preload="metadata"></video>`
-              : '');
-
+        const player = id ? ytEmbed(id)
+                          : (v.playbackUrl ? `<video class="player" src="${esc(v.playbackUrl)}" controls preload="metadata"></video>` : '');
         return `<article class="card">
           ${player}
-          <h3 style="margin:8px 0 4px">${esc(v.title || 'Untitled')}</h3>
-          <p class="muted" style="margin:0">${esc(v.publisher || '')}</p>
+          <h3 style="margin:8px 0 4px">${esc(v.title||'Untitled')}</h3>
+          <p class="muted" style="margin:0">${esc(v.publisher||'')}</p>
         </article>`;
       }).join('');
     }
@@ -322,15 +310,13 @@
     (async ()=>{
       const status = document.getElementById('latestStatus');
       try{
-        const res = await fetch('/videos?ts=' + Date.now(), {
-          headers: { 'Accept':'application/json', 'Cache-Control':'no-cache' }
-        });
+        const res = await fetch('/videos?ts='+Date.now(), { headers:{'Accept':'application/json','Cache-Control':'no-cache'} });
         const txt = await res.text();
         if (!res.ok){ status.textContent = `HTTP ${res.status}: ${txt.slice(0,160)}`; return; }
-        let data; try { data = JSON.parse(txt); } catch { status.textContent = 'Invalid JSON'; return; }
+        let data; try{ data = JSON.parse(txt); }catch{ status.textContent='Invalid JSON'; return; }
         renderLatest(data);
       }catch(e){
-        status.textContent = 'Could not load latest videos: ' + e.message;
+        status.textContent = 'Could not load latest videos: '+e.message;
         console.error(e);
       }
     })();
