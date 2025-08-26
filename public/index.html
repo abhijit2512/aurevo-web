@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>aurevo — Home</title>
+  <title>Aurevo — Home</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/style.css?v=9" />
+  <link rel="stylesheet" href="/style.css?v=11" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 
   <style>
@@ -36,9 +36,6 @@
     .btn.ghost{background:transparent;border:1px solid var(--outline)}
     .btn.accent{background:var(--accent);color:#111827}
     .btn.danger{background:var(--danger)}
-    .btn.full{width:100%;justify-content:center}
-
-    .sidenav .actions{margin-top:auto;display:grid;gap:8px;padding-top:16px}
 
     .main{min-width:0;display:flex;flex-direction:column}
     .topbar{display:flex;align-items:center;gap:10px;justify-content:flex-end;padding:14px 18px;background:transparent;border-bottom:1px solid var(--border)}
@@ -47,7 +44,6 @@
     .container{max-width:1100px;margin:20px auto;padding:0 18px}
     .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
     .muted{color:var(--muted)}
-    .actionsRow{display:flex;gap:10px;margin-top:10px}
     .grid-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
     .player{width:100%;aspect-ratio:16/9;border-radius:12px}
     .footer{color:var(--muted);text-align:center;padding:24px 12px;border-top:1px solid var(--border);margin-top:26px}
@@ -57,7 +53,6 @@
       .sidenav{position:static;min-height:auto;border-right:none;border-bottom:1px solid var(--border)}
       .nav{flex-direction:row;flex-wrap:wrap}
       .nav a{border-radius:8px}
-      .sidenav .actions{grid-template-columns:repeat(2,minmax(0,1fr))}
     }
   </style>
 </head>
@@ -72,15 +67,12 @@
       <nav class="nav">
         <a class="active"><i class="ri-home-4-line"></i> Home</a>
         <a href="/videos.html"><i class="ri-movie-2-line"></i> All Videos</a>
-        <a id="uploadLink" href="/upload.html"><i class="ri-upload-2-line"></i> My Uploads</a>
+        <!-- Hide "My Uploads" to ensure only one Upload entry -->
+        <a id="uploadLink" href="/upload.html" style="display:none"><i class="ri-upload-2-line"></i> My Uploads</a>
         <div class="section">Account</div>
         <a class="ghost" href="#" id="leftSignIn"><i class="ri-login-circle-line"></i> Sign in</a>
+        <a class="ghost" href="#" id="leftSignOut" style="display:none"><i class="ri-logout-circle-r-line"></i> Sign out</a>
       </nav>
-
-      <div class="actions">
-        <button class="btn full accent" id="ctaUpload"><i class="ri-add-line"></i> Upload</button>
-        <button class="btn full danger" id="leftSignOut" style="display:none"><i class="ri-logout-circle-r-line"></i> Sign out</button>
-      </div>
     </aside>
 
     <!-- ========== MAIN CONTENT ========== -->
@@ -92,10 +84,15 @@
           <img class="avatar" src="https://images.unsplash.com/photo-1544723795-3fb6469f5b39?q=80&w=100&auto=format&fit=crop" alt="">
         </div>
 
-        <!-- Upload button in navbar (always visible; click-guarded) -->
+        <!-- Single Upload button in navbar (always visible; click-guarded) -->
         <a id="btnUploadNav" class="btn ghost" href="/upload.html">
           <i class="ri-upload-2-line"></i> Upload
         </a>
+
+        <!-- Sign up (shows when signed out) -->
+        <button id="btnSignUp" class="btn ghost" type="button" style="display:none">
+          <i class="ri-user-add-line"></i> Sign up
+        </button>
 
         <button id="btnSignIn"  class="btn accent"  type="button">Sign in</button>
         <button id="btnSignOut" class="btn danger"  type="button" style="display:none">Sign out</button>
@@ -107,11 +104,6 @@
           <p class="muted" style="margin:0">
             Explore the latest videos. Creators can upload with Title, Publisher, Producer, Genre and Age rating.
           </p>
-          <div class="actionsRow">
-            <a class="btn" href="/videos.html"><i class="ri-play-circle-line"></i> Browse All</a>
-            <!-- Always visible; click-guarded -->
-            <a class="btn ghost" id="ctaUploadTop" href="/upload.html"><i class="ri-upload-cloud-2-line"></i> Upload</a>
-          </div>
           <p id="authMsg" class="muted" style="margin-top:8px"></p>
         </section>
 
@@ -133,6 +125,10 @@
     const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72baebc755dd";
     const CLIENT_ID = "e20305aa-c3a6-438e-80a0-6e0e92434fc2";
 
+    // Optional B2C setup for self-service sign-up (set USE_B2C=true and fill B2C_AUTHORITY)
+    const USE_B2C = false;
+    const B2C_AUTHORITY = "https://YOUR_B2C_TENANT.b2clogin.com/YOUR_B2C_TENANT.onmicrosoft.com/B2C_1_signup_signin";
+
     const msalInstance = new msal.PublicClientApplication({
       auth: { clientId: CLIENT_ID, authority: `https://login.microsoftonline.com/${TENANT_ID}`, redirectUri: window.location.origin },
       cache: { cacheLocation: "localStorage" }
@@ -150,8 +146,7 @@
     async function signIn(){
       try{
         const login = await msalInstance.loginPopup({ scopes:["openid","profile","email"] });
-        const account = login.account;
-        const token = await msalInstance.acquireTokenSilent({ account, scopes:["openid","profile","email"] });
+        const token = await msalInstance.acquireTokenSilent({ account: login.account, scopes:["openid","profile","email"] });
         ID_TOKEN = token.idToken;
         localStorage.setItem(LS_KEY, ID_TOKEN);
         await refreshMe();
@@ -170,12 +165,35 @@
       renderAuthUI();
     }
 
+    async function signUp(){
+      try{
+        if (USE_B2C && B2C_AUTHORITY.startsWith("https://")){
+          const login = await msalInstance.loginPopup({
+            authority: B2C_AUTHORITY,
+            scopes: ["openid","profile","email"],
+          });
+          const token = await msalInstance.acquireTokenSilent({
+            authority: B2C_AUTHORITY,
+            account: login.account,
+            scopes: ["openid","profile","email"],
+          });
+          ID_TOKEN = token.idToken;
+          localStorage.setItem(LS_KEY, ID_TOKEN);
+          await refreshMe();
+          renderAuthUI();
+        } else {
+          // Fallback if you don't have B2C set up yet
+          window.open("https://signup.live.com/", "_blank");
+        }
+      }catch(e){
+        alert("Sign-up failed: "+(e.message||e));
+      }
+    }
+
     async function refreshMe(){
       try{
         const res = await fetch("/me", { headers: authz({ "Accept":"application/json" }) });
-        if (!res.ok){ ME=null; return; }
-        const data = await res.json();
-        ME = data.user || null;
+        ME = res.ok ? (await res.json()).user : null;
       }catch{ ME=null; }
     }
 
@@ -183,18 +201,21 @@
       if (!ME) return alert("Sign in first.");
       const target = (ME.role === "Creator") ? "Consumer" : "Creator";
       try{
-        const res = await fetch("/me/role", { method:"POST", headers: authz({ "Content-Type":"application/json" }), body: JSON.stringify({ role: target }) });
+        const res = await fetch("/me/role", {
+          method:"POST",
+          headers: authz({ "Content-Type":"application/json" }),
+          body: JSON.stringify({ role: target })
+        });
         if (!res.ok){ return alert("Role change failed: " + await res.text()); }
         await refreshMe(); renderAuthUI();
       }catch(e){ alert("Role change failed: " + e.message); }
     }
 
-    // === NEW: Always show upload buttons; guard on click ===
+    // === UI state ===
     function renderAuthUI(){
       const signed = !!(ID_TOKEN || localStorage.getItem(LS_KEY));
       const role = ME?.role || "Guest";
-      const canUpload = (role === "Creator");   // permission
-      const showUploadButton = true;            // visibility
+      const canUpload = (role === "Creator");
 
       document.getElementById("roleBadge").textContent = role;
 
@@ -203,21 +224,19 @@
       document.getElementById("btnSignOut").style.display = signed ? "inline-flex" : "none";
       document.getElementById("btnRole").style.display    = signed ? "inline-flex" : "none";
 
-      // left quick buttons
+      const su = document.getElementById("btnSignUp");
+      if (su) su.style.display = signed ? "none" : "inline-flex";
+
+      // ensure sidebar auth links reflect state
       document.getElementById("leftSignIn").style.display  = signed ? "none" : "inline-flex";
       document.getElementById("leftSignOut").style.display = signed ? "inline-flex" : "none";
-
-      // upload visibility (left + hero + navbar) — always visible now
-      document.getElementById("uploadLink").style.display   = showUploadButton ? "inline-flex" : "none";
-      document.getElementById("ctaUpload").style.display     = showUploadButton ? "inline-flex" : "none";
-      document.getElementById("ctaUploadTop").style.display  = showUploadButton ? "inline-flex" : "none";
-      document.getElementById("btnUploadNav").style.display  = showUploadButton ? "inline-flex" : "none";
 
       document.getElementById("authMsg").textContent =
         signed ? (canUpload ? "You can upload videos." : "Switch to Creator to upload.")
                : "Sign in to rate, comment, or upload.";
     }
 
+    // Guard Upload if not Creator
     function requireCreator(e){
       if (!(ME && ME.role === "Creator")) {
         e.preventDefault();
@@ -227,18 +246,14 @@
       return true;
     }
 
-    // wire up buttons (top + left)
+    // wire up
     document.getElementById("btnSignIn").addEventListener("click", signIn);
     document.getElementById("btnSignOut").addEventListener("click", signOut);
     document.getElementById("btnRole").addEventListener("click", switchRole);
-    document.getElementById("leftSignIn").addEventListener("click", (e)=>{e.preventDefault(); signIn();});
-    document.getElementById("leftSignOut").addEventListener("click", (e)=>{e.preventDefault(); signOut();});
+    document.getElementById("btnSignUp").addEventListener("click", signUp);
 
-    // click-guards on all Upload entry points
+    // single Upload entry point
     document.getElementById("btnUploadNav").addEventListener("click", (e)=>{ requireCreator(e); });
-    document.getElementById("ctaUploadTop").addEventListener("click", (e)=>{ requireCreator(e); });
-    document.getElementById("uploadLink").addEventListener("click", (e)=>{ requireCreator(e); });
-    document.getElementById("ctaUpload").addEventListener("click", (e)=>{ requireCreator(e); });
 
     // boot
     (async ()=>{ renderAuthUI(); if (ID_TOKEN){ await refreshMe(); renderAuthUI(); } })();
