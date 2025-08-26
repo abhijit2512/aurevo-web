@@ -110,13 +110,11 @@
         <a id="sideUpload" href="/upload.html" class="btn-accent"><i class="ri-upload-2-line"></i> Upload</a>
 
         <div class="section">Account</div>
-        <!-- Single Sign in / Sign out in sidebar -->
-
         <!-- Single Sign in / Sign up / Sign out in sidebar -->
         <a id="leftSignIn" href="#"><i class="ri-login-circle-line"></i> Sign in</a>
         <a id="leftSignUp" href="#"><i class="ri-user-add-line"></i> Sign up</a>
         <a id="leftSignOut" href="#" class="btn-danger" style="display:none"><i class="ri-logout-circle-r-line"></i> Sign out</a>
-
+      </nav> <!-- ✅ close nav -->
     </aside>
 
     <!-- ========== MAIN CONTENT ========== -->
@@ -133,7 +131,6 @@
             <i class="ri-exchange-line"></i><span>Switch</span>
           </button>
           <img class="avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Guest Avatar">
-
         </div>
       </header>
 
@@ -163,12 +160,24 @@
   <!-- ========== AUTH / APP SCRIPTS ========== -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
-    /* MSAL config – replace with your real values */
+    /* ===== MSAL config – replace with your real values ===== */
     const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72baebc755dd";
     const CLIENT_ID = "e20305aa-c3a6-438e-80a0-6e0e92434fc2";
 
+    /* ===== Optional Azure AD B2C (for real self-service Sign up) =====
+       Example Authority:
+       https://<yourtenant>.b2clogin.com/<yourtenant>.onmicrosoft.com/B2C_1_signup_signin
+       Leave empty "" to run without B2C (fallback = normal Sign in).
+    */
+    const B2C_AUTHORITY = "";  // <-- put your B2C policy authority here when you have B2C
+    const AUTH_SCOPES   = ["openid","profile","email"];
+
     const msalInstance = new msal.PublicClientApplication({
-      auth: { clientId: CLIENT_ID, authority: `https://login.microsoftonline.com/${TENANT_ID}`, redirectUri: window.location.origin },
+      auth: {
+        clientId: CLIENT_ID,
+        authority: `https://login.microsoftonline.com/${TENANT_ID}`,
+        redirectUri: window.location.origin
+      },
       cache: { cacheLocation: "localStorage" }
     });
 
@@ -181,11 +190,12 @@
       return t ? { ...extra, Authorization: `Bearer ${t}` } : extra;
     }
 
+    /* ===== Auth flows ===== */
     async function signIn(){
       try{
-        const login = await msalInstance.loginPopup({ scopes:["openid","profile","email"] });
+        const login = await msalInstance.loginPopup({ scopes: AUTH_SCOPES });
         const account = login.account;
-               const token = await msalInstance.acquireTokenSilent({ account, scopes:["openid","profile","email"] });
+        const token = await msalInstance.acquireTokenSilent({ account, scopes: AUTH_SCOPES });
         ID_TOKEN = token.idToken;
         localStorage.setItem(LS_KEY, ID_TOKEN);
         await refreshMe();
@@ -195,6 +205,38 @@
         document.getElementById("authMsg").textContent = "Sign in failed: " + (e.message||e);
       }
     }
+
+    async function signUp(){
+      // If you have a B2C user flow, use it:
+      if (B2C_AUTHORITY) {
+        try{
+          const login = await msalInstance.loginPopup({
+            scopes: AUTH_SCOPES,
+            authority: B2C_AUTHORITY
+          });
+          const account = login.account;
+          const token = await msalInstance.acquireTokenSilent({
+            account,
+            scopes: AUTH_SCOPES,
+            authority: B2C_AUTHORITY
+          });
+          ID_TOKEN = token.idToken;
+          localStorage.setItem(LS_KEY, ID_TOKEN);
+          await refreshMe();
+          renderAuthUI();
+          return;
+        }catch(e){
+          console.error(e);
+          document.getElementById("authMsg").textContent = "Sign up failed: " + (e.message||e);
+          return;
+        }
+      }
+
+      // Fallback (no B2C configured): tell the user and open normal sign-in
+      alert("Sign up requires Azure AD B2C. For now we'll open Sign in. Add your B2C policy authority to enable self-service registration.");
+      await signIn();
+    }
+
     async function signOut(){
       try{
         const account = msalInstance.getAllAccounts()[0];
@@ -217,7 +259,11 @@
       if (!ME) return alert("Sign in first.");
       const target = (ME.role === "Creator") ? "Consumer" : "Creator";
       try{
-        const res = await fetch("/me/role", { method:"POST", headers: authz({ "Content-Type":"application/json" }), body: JSON.stringify({ role: target }) });
+        const res = await fetch("/me/role", {
+          method:"POST",
+          headers: authz({ "Content-Type":"application/json" }),
+          body: JSON.stringify({ role: target })
+        });
         if (!res.ok){ return alert("Role change failed: " + await res.text()); }
         await refreshMe(); renderAuthUI();
       }catch(e){ alert("Role change failed: " + e.message); }
@@ -235,6 +281,7 @@
 
       // sidebar auth links
       document.getElementById("leftSignIn").style.display  = signed ? "none" : "inline-flex";
+      document.getElementById("leftSignUp").style.display  = signed ? "none" : "inline-flex";  // show Sign up when signed-out
       document.getElementById("leftSignOut").style.display = signed ? "inline-flex" : "none";
 
       // show "My Uploads" only to Creators
@@ -255,8 +302,9 @@
       return true;
     }
 
-    // Wire up (sidebar only)
+    // === Wire up (sidebar only) ===
     document.getElementById("leftSignIn").addEventListener("click", (e)=>{e.preventDefault(); signIn();});
+    document.getElementById("leftSignUp").addEventListener("click", (e)=>{e.preventDefault(); signUp();});
     document.getElementById("leftSignOut").addEventListener("click", (e)=>{e.preventDefault(); signOut();});
     document.getElementById("btnRole").addEventListener("click", switchRole);
     document.getElementById("sideUpload").addEventListener("click", (e)=>{ requireCreator(e); });
