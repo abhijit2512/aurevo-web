@@ -4,8 +4,9 @@
   <meta charset="utf-8" />
   <title>aurevo — Home</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/style.css?v=13" />
+  <link rel="stylesheet" href="/style.css?v=15" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+
   <style>
     :root{
       --bg:#00d2ff; --bg-2:#ff6a00;
@@ -16,20 +17,23 @@
       --scrim: rgba(0,0,0,.45);
     }
     *,*:before,*:after{box-sizing:border-box}
-    html,body{height:100%}
     body{
-      margin:0;background:linear-gradient(180deg,var(--bg),var(--bg-2));
-      color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Poppins',Arial,sans-serif;
+      margin:0;
+      background:linear-gradient(180deg,var(--bg),var(--bg-2));
+      color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,'Poppins',Arial,sans-serif;
     }
     a{color:inherit;text-decoration:none}
     .shell{display:grid;grid-template-columns:1fr;min-height:100vh}
+
+    /* Sidebar */
     .sidenav{
       position:fixed;left:0;top:0;bottom:0;z-index:1000;width:260px;padding:20px 16px;
       background:rgba(16,24,40,.92);border-right:1px solid var(--border);
       backdrop-filter: blur(8px);transform:translateX(-100%);transition:transform .28s ease;
     }
     body.nav-open .sidenav{transform:translateX(0)}
-    .brand{display:flex;align-items:center;gap:.5rem;margin-bottom:14px;font-weight:800;letter-spacing:.3px;font-size:1.35rem}
+    .brand{display:flex;align-items:center;gap:.5rem;margin-bottom:14px;font-weight:800;font-size:1.35rem}
     .brand i{color:var(--accent);font-size:1.5rem}
     .nav{display:flex;flex-direction:column;gap:8px;margin-top:8px}
     .nav a,.nav button{
@@ -41,16 +45,20 @@
     .nav .section{margin:8px 0 2px;color:var(--muted);font-size:.85rem}
     .btn-accent{background:var(--accent);color:#111827;border-radius:10px;justify-content:center}
     .btn-danger{background:var(--danger);color:#fff;border-radius:10px;justify-content:center}
+
     .scrim{display:none;position:fixed;inset:0;background:var(--scrim);z-index:900}
     body.nav-open .scrim{display:block}
-    .main{min-width:0;display:flex;flex-direction:column;margin-left:0}
+
+    /* Main + Topbar */
+    .main{display:flex;flex-direction:column;margin-left:0}
     .topbar{
       display:flex;align-items:center;justify-content:flex-end;padding:14px 18px;border-bottom:1px solid var(--border);
-      position:relative;background:transparent;
+      background:transparent;position:relative;
     }
     #navToggle{display:inline-flex;position:absolute;left:14px;top:10px;background:transparent;border:0;color:var(--text);font-size:1.2rem;cursor:pointer}
     .rolebox{display:flex;align-items:center;gap:10px;background:var(--panel);padding:8px 10px;border-radius:999px;box-shadow:var(--shadow);font-weight:700}
     .rolebox .avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}
+
     .container{max-width:1100px;margin:20px auto;padding:0 18px}
     .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--r);padding:16px;box-shadow:var(--shadow)}
     .muted{color:var(--muted)}
@@ -58,11 +66,19 @@
     .player{width:100%;aspect-ratio:16/9;border-radius:12px}
     .footer{color:var(--muted);text-align:center;padding:24px 12px;border-top:1px solid var(--border);margin-top:26px}
     .chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#0f1a36;color:var(--muted);font-size:.75rem;margin-right:6px}
-    @media (min-width:900px){ .main{margin-left:260px} body.nav-open .main{margin-left:260px} .sidenav{transform:none} .scrim{display:none!important} #navToggle{display:none}}
+
+    @media (min-width:900px){
+      .main{margin-left:260px}
+      body.nav-open .main{margin-left:260px}
+      .sidenav{transform:none}
+      .scrim{display:none!important}
+      #navToggle{display:none}
+    }
   </style>
 </head>
 <body>
   <div class="shell">
+    <!-- Sidebar -->
     <aside class="sidenav">
       <div class="brand"><span>aurevo</span> <i class="ri-play-fill"></i></div>
       <nav class="nav">
@@ -78,25 +94,26 @@
       </nav>
     </aside>
 
+    <!-- Main -->
     <div class="main">
       <header class="topbar">
-        <button id="navToggle" type="button" aria-label="Open menu"><i class="ri-menu-2-line"></i></button>
+        <button id="navToggle" type="button"><i class="ri-menu-2-line"></i></button>
         <div class="rolebox">
           <span id="roleBadge">Guest</span>
-          <button id="btnRole" type="button" title="Switch role" style="display:none"><i class="ri-exchange-line"></i><span>Switch</span></button>
+          <button id="btnRole" type="button" style="display:none"><i class="ri-exchange-line"></i><span>Switch</span></button>
           <img class="avatar" src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Avatar">
         </div>
       </header>
 
       <main class="container">
         <section class="card">
-          <h2 style="margin:0 0 8px">Welcome to Aurevo</h2>
-          <p class="muted" style="margin:0">Explore the latest videos with Aurevo. Create with Aurevo!.</p>
-          <p id="authMsg" class="muted" style="margin-top:8px"></p>
+          <h2>Welcome to Aurevo</h2>
+          <p class="muted">Explore the latest videos with Aurevo. Create with Aurevo!.</p>
+          <p id="authMsg" class="muted"></p>
         </section>
 
         <section class="card" style="margin-top:14px">
-          <h2 style="margin-top:0">Latest videos</h2>
+          <h2>Latest videos</h2>
           <div id="latest" class="grid-cards"></div>
           <p id="latestStatus" class="muted"></p>
         </section>
@@ -105,218 +122,84 @@
       <footer class="footer">© aurevo</footer>
     </div>
   </div>
-  <div id="scrim" class="scrim" aria-hidden="true"></div>
+  <div id="scrim" class="scrim"></div>
 
   <!-- MSAL -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
-    /************ AUTH CONFIG ************/
-    const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c"; // aurevo-web
-    const AUTH_SCOPES = ["openid","profile","email"];
-    const AUTHORITY  = "https://login.microsoftonline.com/common"; // allow uni/work + personal
-    const REDIRECT   = window.location.origin;
+    const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c"; // Aurevo App reg
+    const AUTHORITY  = "https://login.microsoftonline.com/common";
+    const SCOPES = ["openid","profile","email"];
+    const REDIRECT = window.location.origin;
 
     const msalInstance = new msal.PublicClientApplication({
-      auth: { clientId: CLIENT_ID, authority: AUTHORITY, redirectUri: REDIRECT, navigateToLoginRequestUrl: false },
+      auth:{ clientId: CLIENT_ID, authority: AUTHORITY, redirectUri: REDIRECT },
       cache:{ cacheLocation:"localStorage" }
     });
 
-    const LS_KEY = "AUREVO_ID_TOKEN";
-    let ID_TOKEN = localStorage.getItem(LS_KEY) || null;
-    let ME = null;
+    const LS_KEY="AUREVO_ID_TOKEN"; let ID_TOKEN=localStorage.getItem(LS_KEY)||null; let ME=null;
 
-    // Try to also acquire an access token for your own backend (optional)
-    // If you later add an API scope (api://CLIENT_ID/.default), drop it here.
-    async function tryGetAccessToken() {
-      try {
-        const acc = msalInstance.getAllAccounts()?.[0];
-        if (!acc) return null;
-        // We request a no-resource token; some backends accept the id_token only.
-        // If you create a custom API scope, change scopes to ["api://<clientId>/.default"].
-        const res = await msalInstance.acquireTokenSilent({ account: acc, scopes: AUTH_SCOPES });
-        return res.accessToken || null;
-      } catch { return null; }
-    }
-
-    function authHeaders(extra={}) {
-      const t = ID_TOKEN || localStorage.getItem(LS_KEY) || "";
-      return t ? { ...extra, Authorization: `Bearer ${t}`, "X-ID-Token": t } : extra;
-    }
-
-    async function signedHeaders(base = {}) {
-      const id = ID_TOKEN || localStorage.getItem(LS_KEY) || "";
-      const at = await tryGetAccessToken();
-      const headers = { ...base };
-      if (at) {
-        headers.Authorization = `Bearer ${at}`;
-        headers["X-ID-Token"] = id || "";
-        headers["X-Auth-Token-Type"] = "access+id";
-      } else if (id) {
-        headers.Authorization = `Bearer ${id}`;
-        headers["X-Auth-Token-Type"] = "id";
-      }
-      return headers;
-    }
-
-    /************ FLOWS ************/
     async function signIn(){
       try{
-        const login = await msalInstance.loginPopup({ scopes: AUTH_SCOPES });
-        const account = login.account;
-        const token = await msalInstance.acquireTokenSilent({ account, scopes: AUTH_SCOPES });
-        ID_TOKEN = token.idToken;
-        localStorage.setItem(LS_KEY, ID_TOKEN);
-        await refreshMe();
-        renderAuthUI();
-      }catch(e){
-        console.error(e);
-        document.getElementById("authMsg").textContent = "Sign in failed: " + (e.message||e);
-      }
+        const login=await msalInstance.loginPopup({scopes:SCOPES});
+        const token=await msalInstance.acquireTokenSilent({account:login.account,scopes:SCOPES});
+        ID_TOKEN=token.idToken; localStorage.setItem(LS_KEY,ID_TOKEN);
+        await refreshMe(); renderAuthUI();
+      }catch(e){alert("Sign in failed: "+e.message);}
     }
-
-    async function signUp(){ return signIn(); }
-
-    async function signOut(){
-      try{
-        const account = msalInstance.getAllAccounts()[0];
-        localStorage.removeItem(LS_KEY); ID_TOKEN=null; ME=null;
-        await msalInstance.logoutPopup({ account });
-      }catch{}
-      renderAuthUI();
-    }
+    async function signOut(){ localStorage.removeItem(LS_KEY); ID_TOKEN=null; ME=null; renderAuthUI(); }
 
     async function refreshMe(){
-      try{
-        const res = await fetch("/me", { headers: await signedHeaders({ "Accept":"application/json" }) });
-        if (!res.ok){ ME=null; return; }
-        const data = await res.json();
-        ME = data.user || null;
-      }catch{ ME=null; }
+      try{ const res=await fetch("/me",{headers:{Authorization:"Bearer "+ID_TOKEN}});
+        if(res.ok){ME=(await res.json()).user;} else {ME=null;}
+      }catch{ME=null;}
     }
-
     async function switchRole(){
-      if (!ME) { alert("Sign in first."); return; }
-      const target = (ME.role === "Creator") ? "Consumer" : "Creator";
-      try{
-        const res = await fetch("/me/role", {
-          method:"POST",
-          headers: await signedHeaders({ "Content-Type":"application/json" }),
-          body: JSON.stringify({ role: target })
-        });
-        const txt = await res.text();
-        if (!res.ok){
-          alert(`Role change failed: ${res.status} ${res.statusText}\n${txt.slice(0,300)}`);
-          return;
-        }
-        await refreshMe();
-        renderAuthUI();
-      }catch(e){
-        alert("Role change failed: " + e.message);
-      }
+      if(!ME) return alert("Sign in first");
+      const target=ME.role==="Creator"?"Consumer":"Creator";
+      const res=await fetch("/me/role",{method:"POST",headers:{Authorization:"Bearer "+ID_TOKEN,"Content-Type":"application/json"},body:JSON.stringify({role:target})});
+      if(res.ok){await refreshMe();renderAuthUI();} else {alert("Role change failed");}
     }
 
     function renderAuthUI(){
-      const signed = !!(ID_TOKEN || localStorage.getItem(LS_KEY));
-      const role = ME?.role || "Guest";
-      const canUpload = (role === "Creator");
-      const el = id => document.getElementById(id);
-
-      el("roleBadge").textContent = role;
-      el("btnRole").style.display    = signed ? "inline-flex" : "none";
-      el("leftSignIn").style.display = signed ? "none" : "inline-flex";
-      el("leftSignUp").style.display = signed ? "none" : "inline-flex";
-      el("leftSignOut").style.display= signed ? "inline-flex" : "none";
-      el("uploadLink").style.display = canUpload ? "inline-flex" : "none";
-
-      el("authMsg").textContent = signed
-        ? (canUpload ? "You can upload videos." : "Switch to Creator to upload.")
-        : "Sign in to rate, comment, or upload.";
+      const signed=!!ID_TOKEN; const role=ME?.role||"Guest";
+      document.getElementById("roleBadge").textContent=role;
+      document.getElementById("btnRole").style.display=signed?"inline-flex":"none";
+      document.getElementById("leftSignIn").style.display=signed?"none":"inline-flex";
+      document.getElementById("leftSignUp").style.display=signed?"none":"inline-flex";
+      document.getElementById("leftSignOut").style.display=signed?"inline-flex":"none";
+      document.getElementById("uploadLink").style.display=(role==="Creator")?"inline-flex":"none";
+      document.getElementById("authMsg").textContent=signed?(role==="Creator"?"You can upload videos.":"Switch to Creator to upload."):"Sign in to upload.";
     }
 
-    function requireCreator(e){
-      if (!(ME && ME.role === "Creator")) {
-        e.preventDefault();
-        alert("Sign in and switch to Creator to upload.");
-        return false;
-      }
-      return true;
-    }
-
-    /************ UI WIRING ************/
-    document.addEventListener("DOMContentLoaded", () => {
-      const byId = id => document.getElementById(id);
-
-      byId("leftSignIn")?.addEventListener("click", e => { e.preventDefault(); signIn(); });
-      byId("leftSignUp")?.addEventListener("click", e => { e.preventDefault(); signUp(); });
-      byId("leftSignOut")?.addEventListener("click", e => { e.preventDefault(); signOut(); });
-      byId("btnRole")?.addEventListener("click", switchRole);
-      byId("sideUpload")?.addEventListener("click", e => requireCreator(e));
-
-      const navToggle = byId("navToggle");
-      const scrim     = byId("scrim");
-      navToggle?.addEventListener("click", () => document.body.classList.toggle("nav-open"));
-      scrim?.addEventListener("click", () => document.body.classList.remove("nav-open"));
-      document.querySelectorAll(".sidenav a, .sidenav button").forEach(el=>{
-        el.addEventListener("click", ()=> document.body.classList.remove("nav-open"));
-      });
-
-      (async () => {
-        renderAuthUI();
-        if (ID_TOKEN){ await refreshMe(); renderAuthUI(); }
-      })();
+    document.addEventListener("DOMContentLoaded",()=>{
+      document.getElementById("leftSignIn").onclick=(e)=>{e.preventDefault();signIn();};
+      document.getElementById("leftSignOut").onclick=(e)=>{e.preventDefault();signOut();};
+      document.getElementById("btnRole").onclick=switchRole;
+      document.getElementById("navToggle").onclick=()=>document.body.classList.toggle("nav-open");
+      document.getElementById("scrim").onclick=()=>document.body.classList.remove("nav-open");
+      renderAuthUI(); if(ID_TOKEN) refreshMe().then(renderAuthUI);
     });
   </script>
 
+  <!-- Latest videos -->
   <script>
-    // Latest videos (uploaded files only)
-    function isYouTube(url=''){
-      try{ const u = new URL(url); return u.hostname.includes('youtube.com') || u.hostname.includes('youtu.be'); }
-      catch{ return false; }
+    function renderLatest(videos){
+      const box=document.getElementById("latest"); const status=document.getElementById("latestStatus");
+      if(!videos||!videos.length){status.textContent="No uploaded videos yet."; box.innerHTML=""; return;}
+      status.textContent="";
+      box.innerHTML=videos.map(v=>`
+        <article class="card">
+          <video class="player" src="${v.playbackUrl}" controls></video>
+          <h3>${v.title||"Untitled"}</h3>
+        </article>`).join("");
     }
-    function renderLatest(items){
-      const box = document.getElementById('latest');
-      const status = document.getElementById('latestStatus');
-      const uploaded = (Array.isArray(items)?items:[])
-        .filter(v=> v && v.playbackUrl && !isYouTube(v.playbackUrl))
-        .sort((a,b)=> new Date(b.createdAt||0) - new Date(a.createdAt||0));
-      if (!uploaded.length){ status.textContent='No uploaded videos yet.'; box.innerHTML=''; return; }
-      const esc = (s='') => String(s)
-        .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
-        .replaceAll('"','&quot;').replaceAll("'","&#39;");
-      status.textContent='';
-      box.innerHTML = uploaded.map(v=>{
-        const title = esc(v.title||'Untitled');
-        const publisher = esc(v.publisher||'');
-        const producer  = esc(v.producer||'');
-        const genre     = esc(v.genre||'');
-        const age       = esc(v.age||'');
-        const src       = esc(v.playbackUrl);
-        return `<article class="card">
-          <video class="player" src="${src}" controls preload="metadata"></video>
-          <div class="meta">
-            <h3 style="margin:8px 0 4px">${title}</h3>
-            <p class="muted" style="margin:0">
-              ${publisher ? `<span class="chip">Publisher: ${publisher}</span>` : ''}
-              ${producer  ? `<span class="chip">Producer: ${producer}</span>` : ''}
-              ${genre     ? `<span class="chip">Genre: ${genre}</span>` : ''}
-              ${age       ? `<span class="chip">Age: ${age}</span>` : ''}
-            </p>
-          </div>
-        </article>`;
-      }).join('');
-    }
-    (async ()=>{
-      const status = document.getElementById('latestStatus');
+    (async()=>{
       try{
-        const res = await fetch('/videos?ts='+Date.now(), { headers:{'Accept':'application/json','Cache-Control':'no-cache'} });
-        const txt = await res.text();
-        if (!res.ok){ status.textContent = `HTTP ${res.status}: ${txt.slice(0,160)}`; return; }
-        let data; try{ data = JSON.parse(txt); }catch{ status.textContent='Invalid JSON'; return; }
-        renderLatest(data);
-      }catch(e){
-        status.textContent = 'Could not load latest videos: '+e.message;
-        console.error(e);
-      }
+        const res=await fetch("/videos",{headers:{"Accept":"application/json"}});
+        if(!res.ok) return;
+        const data=await res.json(); renderLatest(data);
+      }catch{}
     })();
   </script>
 </body>
