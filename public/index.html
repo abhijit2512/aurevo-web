@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>aurevo — Home</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/style.css?v=16" />
+  <link rel="stylesheet" href="/style.css?v=17" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 
   <style>
@@ -54,12 +54,12 @@
       background:var(--scrim);
       z-index:900;
       opacity:0;
-      pointer-events:none;   /* <-- FIX */
+      pointer-events:none;
       transition:opacity .25s ease;
     }
     body.nav-open .scrim{
       opacity:1;
-      pointer-events:auto;   /* <-- Allow clicks only when nav is open */
+      pointer-events:auto;
     }
 
     /* Main + Topbar */
@@ -68,7 +68,14 @@
       display:flex;align-items:center;justify-content:flex-end;padding:14px 18px;border-bottom:1px solid var(--border);
       background:transparent;position:relative;
     }
-    #navToggle{display:inline-flex;position:absolute;left:14px;top:10px;background:transparent;border:0;color:var(--text);font-size:1.2rem;cursor:pointer}
+    #navToggle{
+      display:inline-flex;
+      position:absolute;
+      left:14px;top:10px;
+      background:transparent;border:0;
+      color:var(--text);font-size:1.5rem;
+      cursor:pointer;z-index:1100;
+    }
     .rolebox{display:flex;align-items:center;gap:10px;background:var(--panel);padding:8px 10px;border-radius:999px;box-shadow:var(--shadow);font-weight:700}
     .rolebox .avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}
 
@@ -137,11 +144,93 @@
   </div>
   <div id="scrim" class="scrim"></div>
 
+  <!-- MSAL -->
+  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
+    const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c"; 
+    const AUTHORITY = "https://login.microsoftonline.com/common"; 
+    const SCOPES = ["openid","profile","email"];
+    const REDIRECT = window.location.origin;
+
+    const msalInstance = new msal.PublicClientApplication({
+      auth:{ clientId: CLIENT_ID, authority: AUTHORITY, redirectUri: REDIRECT },
+      cache:{ cacheLocation:"localStorage" }
+    });
+
+    const LS_KEY="AUREVO_ID_TOKEN"; 
+    let ID_TOKEN=localStorage.getItem(LS_KEY)||null; 
+    let ME=null;
+
+    async function signIn(){
+      try{
+        const login=await msalInstance.loginPopup({scopes:SCOPES});
+        const token=await msalInstance.acquireTokenSilent({account:login.account,scopes:SCOPES});
+        ID_TOKEN=token.idToken; localStorage.setItem(LS_KEY,ID_TOKEN);
+        await refreshMe(); renderAuthUI();
+      }catch(e){alert("Sign in failed: "+e.message);}
+    }
+    async function signOut(){ 
+      localStorage.removeItem(LS_KEY); ID_TOKEN=null; ME=null; renderAuthUI(); 
+    }
+
+    async function refreshMe(){
+      try{ 
+        const res=await fetch("/me",{headers:{Authorization:"Bearer "+ID_TOKEN}});
+        if(res.ok){ME=(await res.json()).user;} else {ME=null;}
+      }catch{ME=null;}
+    }
+
+    async function switchRole(){
+      if(!ME) return alert("Sign in first");
+      const target=ME.role==="Creator"?"Consumer":"Creator";
+      const res=await fetch("/me/role",{method:"POST",headers:{Authorization:"Bearer "+ID_TOKEN,"Content-Type":"application/json"},body:JSON.stringify({role:target})});
+      if(res.ok){await refreshMe();renderAuthUI();} else {alert("Role change failed");}
+    }
+
+    function renderAuthUI(){
+      const signed=!!ID_TOKEN; const role=ME?.role||"Guest";
+      document.getElementById("roleBadge").textContent=role;
+      document.getElementById("btnRole").style.display=signed?"inline-flex":"none";
+      document.getElementById("leftSignIn").style.display=signed?"none":"inline-flex";
+      document.getElementById("leftSignUp").style.display=signed?"none":"inline-flex";
+      document.getElementById("leftSignOut").style.display=signed?"inline-flex":"none";
+      document.getElementById("uploadLink").style.display=(role==="Creator")?"inline-flex":"none";
+      document.getElementById("authMsg").textContent=signed?(role==="Creator"?"You can upload videos.":"Switch to Creator to upload."):"Sign in to upload.";
+    }
+
     document.addEventListener("DOMContentLoaded",()=>{
+      document.getElementById("leftSignIn").onclick=(e)=>{e.preventDefault();signIn();};
+      document.getElementById("leftSignOut").onclick=(e)=>{e.preventDefault();signOut();};
+      document.getElementById("btnRole").onclick=switchRole;
+
+      // nav toggle
       document.getElementById("navToggle").onclick=()=>document.body.classList.toggle("nav-open");
       document.getElementById("scrim").onclick=()=>document.body.classList.remove("nav-open");
+
+      renderAuthUI(); if(ID_TOKEN) refreshMe().then(renderAuthUI);
     });
+  </script>
+
+  <!-- Latest videos -->
+  <script>
+    function renderLatest(videos){
+      const box=document.getElementById("latest"); 
+      const status=document.getElementById("latestStatus");
+      if(!videos||!videos.length){status.textContent="No uploaded videos yet."; box.innerHTML=""; return;}
+      status.textContent="";
+      box.innerHTML=videos.map(v=>`
+        <article class="card">
+          <video class="player" src="${v.playbackUrl}" controls></video>
+          <h3>${v.title||"Untitled"}</h3>
+        </article>`).join("");
+    }
+    (async()=>{
+      try{
+        const res=await fetch("/videos",{headers:{"Accept":"application/json"}});
+        if(!res.ok) return;
+        const data=await res.json(); renderLatest(data);
+      }catch{}
+    })();
   </script>
 </body>
 </html>
