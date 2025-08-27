@@ -145,62 +145,20 @@
   <!-- Auth / App -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
-    // ===== App constants =====
-    const CLIENT_ID  = "ade4f251-cf4f-426b-a7dc-f9f19fce156c";
-    const TENANT_ID  = "b0e4c77a-c53c-4cbc-8f97-72babec755dd"; // if wrong, detection will fall back
-    const REDIRECT   = "https://aurevo-web-gqbadgducyf2hkhn.canadacentral-01.azurewebsites.net";
-    const AUTH_SCOPES= ["openid","profile","email"];
+    // ===== MSAL config (authority WITHOUT /v2.0) =====
+    const CLIENT_ID   = "ade4f251-cf4f-426b-a7dc-f9f19fce156c";
+    const AUTH_SCOPES = ["openid","profile","email"];
+    const REDIRECT_URI= "https://aurevo-web-gqbadgducyf2hkhn.canadacentral-01.azurewebsites.net";
 
-    // ===== Dynamic authority detection (picks the first that works) =====
-    const CANDIDATE_AUTHORITIES = [
-      `https://login.microsoftonline.com/${TENANT_ID}/v2.0`,
-      "https://login.microsoftonline.com/organizations/v2.0",
-      "https://login.microsoftonline.com/common/v2.0",
-      "https://login.windows.net/organizations/v2.0",
-      "https://login.windows.net/common/v2.0"
-    ];
-
-    async function fetchWithTimeout(url, ms=6000){
-      return Promise.race([
-        fetch(url, {mode:"cors", cache:"no-store"}),
-        new Promise((_,rej)=> setTimeout(()=>rej(new Error("timeout")), ms))
-      ]);
-    }
-
-    async function pickAuthority(){
-      let lastErr = null;
-      for (const base of CANDIDATE_AUTHORITIES){
-        try{
-          const url = `${base}/.well-known/openid-configuration`;
-          const res = await fetchWithTimeout(url);
-          if (!res.ok) throw new Error(`HTTP ${res.status}`);
-          const js = await res.json();
-          if (js.authorization_endpoint && js.token_endpoint){
-            return base; // ✅ usable authority
-          }
-          throw new Error("missing endpoints");
-        }catch(e){ lastErr = e; /* try next */ }
-      }
-      throw lastErr || new Error("No authority reachable");
-    }
-
-    // msalInstance is created after a working authority is found
-    let msalInstance = null;
-
-    async function initAuth(){
-      const msg = (t)=>{ const el=document.getElementById("authMsg"); if(el) el.textContent=t; };
-      msg("Checking sign-in service…");
-      try{
-        const authority = await pickAuthority();
-        msalInstance = new msal.PublicClientApplication({
-          auth: { clientId: CLIENT_ID, authority, redirectUri: REDIRECT, navigateToLoginRequestUrl:false },
-          cache: { cacheLocation:"localStorage" }
-        });
-        msg(""); // clear
-      }catch(e){
-        msg("Sign in unavailable: "+ (e.message||e));
-      }
-    }
+    const msalInstance = new msal.PublicClientApplication({
+      auth: {
+        clientId: CLIENT_ID,
+        authority: "https://login.microsoftonline.com/common", // ← no /v2.0
+        redirectUri: REDIRECT_URI,
+        navigateToLoginRequestUrl: false
+      },
+      cache: { cacheLocation: "localStorage" }
+    });
 
     const LS_KEY = "AUREVO_ID_TOKEN";
     let ID_TOKEN = localStorage.getItem(LS_KEY) || null;
@@ -212,12 +170,6 @@
     };
 
     async function signIn(){
-      if (!msalInstance){ await initAuth(); }
-      if (!msalInstance){
-        const el=document.getElementById("authMsg");
-        if(el) el.textContent="Sign in failed: auth service not reachable.";
-        return;
-      }
       try{
         const login = await msalInstance.loginPopup({ scopes: AUTH_SCOPES });
         const token = await msalInstance.acquireTokenSilent({ account: login.account, scopes: AUTH_SCOPES });
@@ -235,12 +187,10 @@
 
     async function signOut(){
       try{
-        if (msalInstance){
-          const account = msalInstance.getAllAccounts()[0];
-          await msalInstance.logoutPopup({ account });
-        }
+        const account = msalInstance.getAllAccounts()[0];
+        localStorage.removeItem(LS_KEY); ID_TOKEN=null; ME=null;
+        await msalInstance.logoutPopup({ account });
       }catch{}
-      localStorage.removeItem(LS_KEY); ID_TOKEN=null; ME=null;
       renderAuthUI();
     }
 
@@ -249,7 +199,7 @@
         const res = await fetch("/me", { headers: authz({ "Accept":"application/json" }) });
         if (!res.ok){ ME=null; return; }
         const data = await res.json();
-        ME = data.user || null;
+        ME = (data && data.user) ? data.user : null;
       }catch{ ME=null; }
     }
 
@@ -283,7 +233,7 @@
 
       el("authMsg").textContent = signed
         ? (canUpload ? "You can upload videos." : "Switch to Creator to upload.")
-        : (el("authMsg").textContent || "Sign in to rate, comment, or upload.");
+        : "Sign in to rate, comment, or upload.";
     }
 
     function requireCreator(e){
@@ -314,8 +264,6 @@
 
       (async () => {
         renderAuthUI();
-        // try to initialize MSAL early (non-blocking)
-        initAuth();
         if (ID_TOKEN){ await refreshMe(); renderAuthUI(); }
       })();
     });
