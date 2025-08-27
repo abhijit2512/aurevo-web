@@ -145,17 +145,15 @@
   <!-- Auth / App -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
-    // ===== MSAL config (single-tenant Entra ID) =====
-    const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72babec755dd";
-    const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c";
-
+    // ===== MSAL config =====
+    const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72babec755dd"; // your Directory (tenant) ID
+    const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c"; // your App (client) ID
     const AUTH_SCOPES = ["openid","profile","email"];
 
     const msalInstance = new msal.PublicClientApplication({
       auth: {
         clientId: CLIENT_ID,
-        authority: `https://login.microsoftonline.com/${TENANT_ID}`,
-        // 🔒 exact live origin registered in Azure:
+        authority: `https://login.microsoftonline.com/${TENANT_ID}/v2.0`, // force v2.0
         redirectUri: "https://aurevo-web-gqbadgducyf2hkhn.canadacentral-01.azurewebsites.net",
         navigateToLoginRequestUrl: false
       },
@@ -185,7 +183,7 @@
       }
     }
 
-    async function signUp(){ return signIn(); } // no B2C flow configured
+    async function signUp(){ return signIn(); } // no B2C configured
 
     async function signOut(){
       try{
@@ -250,14 +248,12 @@
     document.addEventListener("DOMContentLoaded", () => {
       const byId = id => document.getElementById(id);
 
-      // Sidebar auth
       byId("leftSignIn")?.addEventListener("click", e => { e.preventDefault(); signIn(); });
       byId("leftSignUp")?.addEventListener("click", e => { e.preventDefault(); signUp(); });
       byId("leftSignOut")?.addEventListener("click", e => { e.preventDefault(); signOut(); });
       byId("btnRole")?.addEventListener("click", switchRole);
       byId("sideUpload")?.addEventListener("click", e => requireCreator(e));
 
-      // Navbar toggle
       const navToggle = byId("navToggle");
       const scrim     = byId("scrim");
       navToggle?.addEventListener("click", () => document.body.classList.toggle("nav-open"));
@@ -266,7 +262,6 @@
         el.addEventListener("click", ()=> document.body.classList.remove("nav-open"));
       });
 
-      // Boot
       (async () => {
         renderAuthUI();
         if (ID_TOKEN){ await refreshMe(); renderAuthUI(); }
