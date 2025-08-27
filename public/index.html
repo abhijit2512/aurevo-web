@@ -34,12 +34,15 @@
       backdrop-filter: blur(8px);
       transform:translateX(-100%);   /* hidden by default */
       transition:transform .3s ease-in-out; /* slide animation */
+      display:flex;flex-direction:column;
     }
     body.nav-open .sidenav{transform:translateX(0)}
+    .sidehead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .sideclose{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--border);border-radius:10px;background:#0a0f20;color:var(--text);cursor:pointer}
 
-    .brand{display:flex;align-items:center;gap:.5rem;margin-bottom:14px;font-weight:800;font-size:1.35rem}
+    .brand{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:1.35rem}
     .brand i{color:var(--accent);font-size:1.5rem}
-    .nav{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .nav{display:flex;flex-direction:column;gap:8px;margin-top:10px}
     .nav a,.nav button{
       display:flex;align-items:center;gap:.8rem;padding:12px 12px;border-radius:12px;color:var(--text);
       background:transparent;border:0;cursor:pointer;font:inherit;text-align:left
@@ -61,10 +64,7 @@
       pointer-events:none;
       transition:opacity .25s ease;
     }
-    body.nav-open .scrim{
-      opacity:1;
-      pointer-events:auto;
-    }
+    body.nav-open .scrim{opacity:1;pointer-events:auto;}
 
     /* Main + Topbar */
     .main{display:flex;flex-direction:column;margin-left:0;transition:margin-left .3s ease}
@@ -103,10 +103,13 @@
 <body>
   <div class="shell">
     <!-- Sidebar -->
-    <aside class="sidenav">
-      <div class="brand"><span>aurevo</span> <i class="ri-play-fill"></i></div>
-      <nav class="nav">
-        <a class="active"><i class="ri-home-4-line"></i> Home</a>
+    <aside id="sidenav" class="sidenav" aria-hidden="true" aria-label="Main">
+      <div class="sidehead">
+        <div class="brand"><span>aurevo</span> <i class="ri-play-fill"></i></div>
+        <button id="sideClose" class="sideclose" type="button" aria-label="Close menu"><i class="ri-close-line"></i></button>
+      </div>
+      <nav class="nav" id="sideNavLinks">
+        <a class="active" href="/"><i class="ri-home-4-line"></i> Home</a>
         <a href="/videos.html"><i class="ri-movie-2-line"></i> All Videos</a>
         <a id="uploadLink" href="/upload.html" style="display:none"><i class="ri-upload-2-line"></i> My Uploads</a>
         <div class="section">Creator</div>
@@ -121,7 +124,7 @@
     <!-- Main -->
     <div class="main">
       <header class="topbar">
-        <button id="navToggle" type="button"><i class="ri-menu-2-line"></i></button>
+        <button id="navToggle" type="button" aria-controls="sidenav" aria-expanded="false" aria-label="Open menu"><i class="ri-menu-2-line"></i></button>
         <div class="rolebox">
           <span id="roleBadge">Guest</span>
           <button id="btnRole" type="button" style="display:none"><i class="ri-exchange-line"></i><span>Switch</span></button>
@@ -146,7 +149,7 @@
       <footer class="footer">© aurevo</footer>
     </div>
   </div>
-  <div id="scrim" class="scrim"></div>
+  <div id="scrim" class="scrim" aria-hidden="true"></div>
 
   <!-- MSAL -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
@@ -175,6 +178,7 @@
     }
     async function signOut(){ 
       localStorage.removeItem(LS_KEY); ID_TOKEN=null; ME=null; renderAuthUI(); 
+      try{ await msalInstance.logoutPopup(); }catch(_){}
     }
 
     async function refreshMe(){
@@ -201,18 +205,83 @@
       document.getElementById("uploadLink").style.display=(role==="Creator")?"inline-flex":"none";
       document.getElementById("authMsg").textContent=signed?(role==="Creator"?"You can upload videos.":"Switch to Creator to upload."):"Sign in to upload.";
     }
+  </script>
 
-    document.addEventListener("DOMContentLoaded",()=>{
-      document.getElementById("leftSignIn").onclick=(e)=>{e.preventDefault();signIn();};
-      document.getElementById("leftSignOut").onclick=(e)=>{e.preventDefault();signOut();};
-      document.getElementById("btnRole").onclick=switchRole;
+  <!-- Sidebar / Hamburger controller (open/close + ESC + focus trap) -->
+  <script>
+    (function (){
+      const body = document.body;
+      const sidenav  = document.getElementById('sidenav');
+      const scrim    = document.getElementById('scrim');
+      const btnOpen  = document.getElementById('navToggle');
+      const btnClose = document.getElementById('sideClose');
+      const linksWrap= document.getElementById('sideNavLinks');
 
-      // nav toggle
-      document.getElementById("navToggle").onclick=()=>document.body.classList.toggle("nav-open");
-      document.getElementById("scrim").onclick=()=>document.body.classList.remove("nav-open");
+      const focusablesSel = 'a, button, [tabindex]:not([tabindex="-1"])';
+      let lastFocused = null;
 
-      renderAuthUI(); if(ID_TOKEN) refreshMe().then(renderAuthUI);
-    });
+      function firstFocusable(){
+        return sidenav.querySelector(focusablesSel);
+      }
+      function allFocusable(){
+        return Array.from(sidenav.querySelectorAll(focusablesSel)).filter(el=>!el.disabled && el.offsetParent!==null);
+      }
+
+      function openMenu(){
+        lastFocused = document.activeElement;
+        body.classList.add('nav-open');
+        sidenav.setAttribute('aria-hidden','false');
+        scrim.setAttribute('aria-hidden','false');
+        btnOpen.setAttribute('aria-expanded','true');
+        (firstFocusable() || btnClose).focus();
+      }
+      function closeMenu(){
+        body.classList.remove('nav-open');
+        sidenav.setAttribute('aria-hidden','true');
+        scrim.setAttribute('aria-hidden','true');
+        btnOpen.setAttribute('aria-expanded','false');
+        (lastFocused || btnOpen).focus();
+      }
+
+      btnOpen.addEventListener('click', openMenu);
+      btnClose.addEventListener('click', closeMenu);
+      scrim.addEventListener('click', closeMenu);
+
+      // Close after clicking any link inside sidebar
+      linksWrap.addEventListener('click', (e)=>{
+        const t = e.target.closest('a,button');
+        if(!t) return;
+        // wire auth actions
+        if (t.id === 'leftSignIn'){ e.preventDefault(); signIn().then(closeMenu); return; }
+        if (t.id === 'leftSignOut'){ e.preventDefault(); signOut(); closeMenu(); return; }
+        if (t.id === 'btnRole' || t.id === 'linkSwitchRole'){ e.preventDefault(); switchRole(); closeMenu(); return; }
+        // normal nav -> just close
+        closeMenu();
+      });
+
+      // ESC to close + focus trap
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === 'Escape' && body.classList.contains('nav-open')) { e.preventDefault(); closeMenu(); }
+        if (e.key === 'Tab' && body.classList.contains('nav-open')){
+          const f = allFocusable();
+          if (f.length === 0) return;
+          const first = f[0], last = f[f.length-1];
+          if (e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+          else if (!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+        }
+      });
+
+      // Initial auth wiring + render on load
+      document.addEventListener('DOMContentLoaded', ()=>{
+        document.getElementById("leftSignIn").onclick=(ev)=>{ev.preventDefault();signIn();};
+        document.getElementById("leftSignOut").onclick=(ev)=>{ev.preventDefault();signOut();};
+        const btnRole = document.getElementById("btnRole");
+        btnRole.onclick = switchRole;
+
+        renderAuthUI();
+        if (ID_TOKEN) refreshMe().then(renderAuthUI);
+      });
+    })();
   </script>
 
   <!-- Latest videos -->
