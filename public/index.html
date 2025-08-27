@@ -145,15 +145,16 @@
   <!-- Auth / App -->
   <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
   <script>
-    // ===== MSAL config (authority WITHOUT /v2.0) =====
+    // ===== MSAL config (Multitenant) =====
     const CLIENT_ID   = "ade4f251-cf4f-426b-a7dc-f9f19fce156c";
     const AUTH_SCOPES = ["openid","profile","email"];
     const REDIRECT_URI= "https://aurevo-web-gqbadgducyf2hkhn.canadacentral-01.azurewebsites.net";
 
+    // Use common for multitenant (no /v2.0 on the URL)
     const msalInstance = new msal.PublicClientApplication({
       auth: {
         clientId: CLIENT_ID,
-        authority: "https://login.microsoftonline.com/common", // ← no /v2.0
+        authority: "https://login.microsoftonline.com/common",
         redirectUri: REDIRECT_URI,
         navigateToLoginRequestUrl: false
       },
@@ -199,7 +200,7 @@
         const res = await fetch("/me", { headers: authz({ "Accept":"application/json" }) });
         if (!res.ok){ ME=null; return; }
         const data = await res.json();
-        ME = (data && data.user) ? data.user : null;
+        ME = data.user || null;
       }catch{ ME=null; }
     }
 
