@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>aurevo — Home</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/style.css?v=15" />
+  <link rel="stylesheet" href="/style.css?v=16" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 
   <style>
@@ -50,12 +50,12 @@
     body.nav-open .scrim{display:block}
 
     /* Main + Topbar */
-    .main{display:flex;flex-direction:column;margin-left:0}
+    .main{display:flex;flex-direction:column;margin-left:0;transition:margin-left .28s ease;}
     .topbar{
       display:flex;align-items:center;justify-content:flex-end;padding:14px 18px;border-bottom:1px solid var(--border);
       background:transparent;position:relative;
     }
-    #navToggle{display:inline-flex;position:absolute;left:14px;top:10px;background:transparent;border:0;color:var(--text);font-size:1.2rem;cursor:pointer}
+    #navToggle{display:inline-flex;position:absolute;left:14px;top:10px;background:transparent;border:0;color:var(--text);font-size:1.5rem;cursor:pointer}
     .rolebox{display:flex;align-items:center;gap:10px;background:var(--panel);padding:8px 10px;border-radius:999px;box-shadow:var(--shadow);font-weight:700}
     .rolebox .avatar{width:32px;height:32px;border-radius:50%;object-fit:cover}
 
@@ -67,12 +67,13 @@
     .footer{color:var(--muted);text-align:center;padding:24px 12px;border-top:1px solid var(--border);margin-top:26px}
     .chip{display:inline-block;padding:2px 8px;border-radius:999px;background:#0f1a36;color:var(--muted);font-size:.75rem;margin-right:6px}
 
+    /* ✅ Always show hamburger, sidebar slides */
     @media (min-width:900px){
-      .main{margin-left:260px}
+      .main{margin-left:0}
       body.nav-open .main{margin-left:260px}
-      .sidenav{transform:none}
-      .scrim{display:none!important}
-      #navToggle{display:none}
+      .sidenav{transform:translateX(-100%)}
+      body.nav-open .sidenav{transform:translateX(0)}
+      .scrim{display:block}
     }
   </style>
 </head>
@@ -137,7 +138,9 @@
       cache:{ cacheLocation:"localStorage" }
     });
 
-    const LS_KEY="AUREVO_ID_TOKEN"; let ID_TOKEN=localStorage.getItem(LS_KEY)||null; let ME=null;
+    const LS_KEY="AUREVO_ID_TOKEN"; 
+    let ID_TOKEN=localStorage.getItem(LS_KEY)||null; 
+    let ME=null;
 
     async function signIn(){
       try{
