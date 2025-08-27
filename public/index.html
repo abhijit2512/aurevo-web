@@ -143,22 +143,20 @@
   <div id="scrim" class="scrim" aria-hidden="true"></div>
 
   <!-- Auth / App -->
-  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
-  <script>
-    // ===== MSAL config =====
-    const TENANT_ID = "b0e4c77a-c53c-4cbc-8f97-72babec755dd"; // your Directory (tenant) ID
-    const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c"; // your App (client) ID
-    const AUTH_SCOPES = ["openid","profile","email"];
+ <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+<script>
+  const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c";
+  const AUTH_SCOPES = ["openid","profile","email"];
 
-    const msalInstance = new msal.PublicClientApplication({
-      auth: {
-        clientId: CLIENT_ID,
-        authority: `https://login.microsoftonline.com/${TENANT_ID}/v2.0`, // force v2.0
-        redirectUri: "https://aurevo-web-gqbadgducyf2hkhn.canadacentral-01.azurewebsites.net",
-        navigateToLoginRequestUrl: false
-      },
-      cache: { cacheLocation: "localStorage" }
-    });
+  const msalInstance = new msal.PublicClientApplication({
+    auth: {
+      clientId: CLIENT_ID,
+      authority: "https://login.microsoftonline.com/organizations/v2.0",
+      redirectUri: "https://aurevo-web-gqbadgducyf2hkhn.canadacentral-01.azurewebsites.net",
+      navigateToLoginRequestUrl: false
+    },
+    cache: { cacheLocation: "localStorage" }
+  });
 
     const LS_KEY = "AUREVO_ID_TOKEN";
     let ID_TOKEN = localStorage.getItem(LS_KEY) || null;
