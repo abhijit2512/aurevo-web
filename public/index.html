@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>aurevo — Home</title>
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <link rel="stylesheet" href="/style.css?v=18" />
+  <link rel="stylesheet" href="/style.css?v=19" />
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
 
   <style>
@@ -113,10 +113,9 @@
         <a href="/videos.html"><i class="ri-movie-2-line"></i> All Videos</a>
         <a id="uploadLink" href="/upload.html" style="display:none"><i class="ri-upload-2-line"></i> My Uploads</a>
         <div class="section">Creator</div>
-        <a id="sideUpload" href="/upload.html" class="btn-accent"><i class="ri-upload-2-line"></i> Upload</a>
+        <a id="sideUpload" href="/upload.html" class="btn-accent" style="display:none"><i class="ri-upload-2-line"></i> Upload</a>
         <div class="section">Account</div>
-        <a id="leftSignIn" href="#"><i class="ri-login-circle-line"></i> Sign in</a>
-        <a id="leftSignUp" href="#"><i class="ri-user-add-line"></i> Sign up</a>
+        <a id="leftSignIn" href="#" style="display:none"><i class="ri-login-circle-line"></i> Sign in</a>
         <a id="leftSignOut" href="#" class="btn-danger" style="display:none"><i class="ri-logout-circle-r-line"></i> Sign out</a>
       </nav>
     </aside>
@@ -135,7 +134,7 @@
       <main class="container">
         <section class="card">
           <h2>Welcome to Aurevo</h2>
-          <p class="muted">Explore the latest videos with Aurevo. Create with Aurevo!.</p>
+          <p class="muted">Explore the latest videos with Aurevo. Create with Aurevo!</p>
           <p id="authMsg" class="muted"></p>
         </section>
 
@@ -151,64 +150,130 @@
   </div>
   <div id="scrim" class="scrim" aria-hidden="true"></div>
 
-  <!-- MSAL -->
-  <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+  <!-- NO static MSAL script here. We'll load it dynamically only if the server says auth is enabled. -->
+
   <script>
-    const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c"; 
-    const AUTHORITY = "https://login.microsoftonline.com/common"; 
-    const SCOPES = ["openid","profile","email"];
-    const REDIRECT = window.location.origin;
+    // Global state
+    let HAS_AUTH = false;
+    let ID_TOKEN = null;
+    let ME = null;
 
-    const msalInstance = new msal.PublicClientApplication({
-      auth:{ clientId: CLIENT_ID, authority: AUTHORITY, redirectUri: REDIRECT },
-      cache:{ cacheLocation:"localStorage" }
-    });
-
-    const LS_KEY="AUREVO_ID_TOKEN"; 
-    let ID_TOKEN=localStorage.getItem(LS_KEY)||null; 
-    let ME=null;
-
-    async function signIn(){
-      try{
-        const login=await msalInstance.loginPopup({scopes:SCOPES});
-        const token=await msalInstance.acquireTokenSilent({account:login.account,scopes:SCOPES});
-        ID_TOKEN=token.idToken; localStorage.setItem(LS_KEY,ID_TOKEN);
-        await refreshMe(); renderAuthUI();
-      }catch(e){alert("Sign in failed: "+e.message);}
-    }
-    async function signOut(){ 
-      localStorage.removeItem(LS_KEY); ID_TOKEN=null; ME=null; renderAuthUI(); 
-      try{ await msalInstance.logoutPopup(); }catch(_){}
-    }
-
-    async function refreshMe(){
-      try{ 
-        const res=await fetch("/me",{headers:{Authorization:"Bearer "+ID_TOKEN}});
-        if(res.ok){ME=(await res.json()).user;} else {ME=null;}
-      }catch{ME=null;}
-    }
-
-    async function switchRole(){
-      if(!ME) return alert("Sign in first");
-      const target=ME.role==="Creator"?"Consumer":"Creator";
-      const res=await fetch("/me/role",{method:"POST",headers:{Authorization:"Bearer "+ID_TOKEN,"Content-Type":"application/json"},body:JSON.stringify({role:target})});
-      if(res.ok){await refreshMe();renderAuthUI();} else {alert("Role change failed");}
-    }
-
+    // --- UI helpers ---
     function renderAuthUI(){
-      const signed=!!ID_TOKEN; const role=ME?.role||"Guest";
-      document.getElementById("roleBadge").textContent=role;
-      document.getElementById("btnRole").style.display=signed?"inline-flex":"none";
-      document.getElementById("leftSignIn").style.display=signed?"none":"inline-flex";
-      document.getElementById("leftSignUp").style.display=signed?"none":"inline-flex";
-      document.getElementById("leftSignOut").style.display=signed?"inline-flex":"none";
-      document.getElementById("uploadLink").style.display=(role==="Creator")?"inline-flex":"none";
-      document.getElementById("authMsg").textContent=signed?(role==="Creator"?"You can upload videos.":"Switch to Creator to upload."):"Sign in to upload.";
-    }
-  </script>
+      const role = ME?.role || (HAS_AUTH ? "Consumer" : "Guest");
+      document.getElementById("roleBadge").textContent = role;
 
-  <!-- Sidebar / Hamburger controller (open/close + ESC + focus trap) -->
-  <script>
+      // Upload links visible only for Creator when auth ON
+      const canUpload = HAS_AUTH && role === "Creator";
+      document.getElementById("uploadLink").style.display = canUpload ? "inline-flex" : "none";
+      document.getElementById("sideUpload").style.display  = canUpload ? "inline-flex" : "none";
+
+      // Sign in/out buttons only when auth ON
+      document.getElementById("leftSignIn").style.display = HAS_AUTH && !ID_TOKEN ? "inline-flex" : "none";
+      document.getElementById("leftSignOut").style.display = HAS_AUTH && ID_TOKEN ? "inline-flex" : "none";
+
+      // Role switch only when signed in
+      document.getElementById("btnRole").style.display = HAS_AUTH && ID_TOKEN ? "inline-flex" : "none";
+
+      // Message
+      const msg = document.getElementById("authMsg");
+      if (!HAS_AUTH) {
+        msg.textContent = "Public demo: viewing is open. Uploads are disabled.";
+      } else if (!ID_TOKEN) {
+        msg.textContent = "Sign in to upload.";
+      } else {
+        msg.textContent = (role === "Creator") ? "You can upload videos." : "Switch to Creator to upload.";
+      }
+    }
+
+    async function fetchJSON(url, opts){
+      const res = await fetch(url, opts);
+      if (!res.ok) throw new Error(res.status + " " + res.statusText);
+      return res.json();
+    }
+
+    // --- Auth wiring (only if HAS_AUTH = true) ---
+    async function setupAuthIfEnabled(){
+      // Ask server if auth is enabled
+      try {
+        const status = await fetchJSON("/auth/status");
+        HAS_AUTH = !!status.hasAuth;
+      } catch {
+        HAS_AUTH = false;
+      }
+
+      // When auth OFF → just render guest UI
+      if (!HAS_AUTH) {
+        renderAuthUI();
+        return;
+      }
+
+      // Auth ON → dynamically load MSAL and wire up
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = "https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js";
+        s.onload = resolve;
+        s.onerror = () => reject(new Error("Failed to load MSAL"));
+        document.head.appendChild(s);
+      });
+
+      const CLIENT_ID = "ade4f251-cf4f-426b-a7dc-f9f19fce156c";   // your front-end app id (public)
+      const AUTHORITY = "https://login.microsoftonline.com/common";
+      const SCOPES = ["openid","profile","email"];
+      const REDIRECT = window.location.origin;
+
+      const msalInstance = new msal.PublicClientApplication({
+        auth:{ clientId: CLIENT_ID, authority: AUTHORITY, redirectUri: REDIRECT },
+        cache:{ cacheLocation:"localStorage" }
+      });
+
+      const LS_KEY="AUREVO_ID_TOKEN";
+      ID_TOKEN = localStorage.getItem(LS_KEY) || null;
+
+      async function refreshMe(){
+        try{
+          const res = await fetch("/me", { headers: ID_TOKEN ? { Authorization: "Bearer " + ID_TOKEN } : {} });
+          if (res.ok) ME = (await res.json()).user; else ME = null;
+        } catch{ ME = null; }
+      }
+
+      async function signIn(){
+        try{
+          const login = await msalInstance.loginPopup({ scopes: SCOPES });
+          const token = await msalInstance.acquireTokenSilent({ account: login.account, scopes: SCOPES });
+          ID_TOKEN = token.idToken;
+          localStorage.setItem(LS_KEY, ID_TOKEN);
+          await refreshMe(); renderAuthUI();
+        }catch(e){ alert("Sign in failed: " + e.message); }
+      }
+
+      async function signOut(){
+        try{ await msalInstance.logoutPopup(); }catch(_){}
+        localStorage.removeItem(LS_KEY);
+        ID_TOKEN=null; ME=null; renderAuthUI();
+      }
+
+      async function switchRole(){
+        if(!ME) return alert("Sign in first");
+        const target = ME.role === "Creator" ? "Consumer" : "Creator";
+        const res = await fetch("/me/role", {
+          method:"POST",
+          headers:{ Authorization:"Bearer "+ID_TOKEN, "Content-Type":"application/json" },
+          body: JSON.stringify({ role: target })
+        });
+        if(res.ok){ await refreshMe(); renderAuthUI(); } else { alert("Role change failed"); }
+      }
+
+      // Expose for other handlers
+      window.__auth = { signIn, signOut, switchRole, refreshMe };
+
+      // If we already have a token, try to hydrate user
+      if (ID_TOKEN) await refreshMe();
+
+      renderAuthUI();
+    }
+
+    // --- Sidebar / Hamburger controller (open/close + ESC + focus trap) ---
     (function (){
       const body = document.body;
       const sidenav  = document.getElementById('sidenav');
@@ -220,9 +285,7 @@
       const focusablesSel = 'a, button, [tabindex]:not([tabindex="-1"])';
       let lastFocused = null;
 
-      function firstFocusable(){
-        return sidenav.querySelector(focusablesSel);
-      }
+      function firstFocusable(){ return sidenav.querySelector(focusablesSel); }
       function allFocusable(){
         return Array.from(sidenav.querySelectorAll(focusablesSel)).filter(el=>!el.disabled && el.offsetParent!==null);
       }
@@ -251,12 +314,19 @@
       linksWrap.addEventListener('click', (e)=>{
         const t = e.target.closest('a,button');
         if(!t) return;
-        // wire auth actions
-        if (t.id === 'leftSignIn'){ e.preventDefault(); signIn().then(closeMenu); return; }
-        if (t.id === 'leftSignOut'){ e.preventDefault(); signOut(); closeMenu(); return; }
-        if (t.id === 'btnRole' || t.id === 'linkSwitchRole'){ e.preventDefault(); switchRole(); closeMenu(); return; }
-        // normal nav -> just close
-        closeMenu();
+
+        if (t.id === 'leftSignIn'){
+          e.preventDefault();
+          if (!HAS_AUTH) { alert("Sign-in is disabled on this public demo."); closeMenu(); return; }
+          window.__auth?.signIn().then(closeMenu);
+          return;
+        }
+        if (t.id === 'leftSignOut'){
+          e.preventDefault();
+          if (!HAS_AUTH) { closeMenu(); return; }
+          window.__auth?.signOut(); closeMenu(); return;
+        }
+        closeMenu(); // normal nav
       });
 
       // ESC to close + focus trap
@@ -271,23 +341,28 @@
         }
       });
 
-      // Initial auth wiring + render on load
-      document.addEventListener('DOMContentLoaded', ()=>{
-        document.getElementById("leftSignIn").onclick=(ev)=>{ev.preventDefault();signIn();};
-        document.getElementById("leftSignOut").onclick=(ev)=>{ev.preventDefault();signOut();};
-        const btnRole = document.getElementById("btnRole");
-        btnRole.onclick = switchRole;
+      // Initial wiring on load
+      document.addEventListener('DOMContentLoaded', async ()=>{
+        // Role switch button (works only when auth ON)
+        document.getElementById("btnRole").onclick = ()=> {
+          if (!HAS_AUTH) return alert("Roles are disabled on this public demo.");
+          window.__auth?.switchRole();
+        };
 
+        await setupAuthIfEnabled();   // sets HAS_AUTH and wires MSAL if needed
         renderAuthUI();
-        if (ID_TOKEN) refreshMe().then(renderAuthUI);
+
+        // Render latest videos
+        try{
+          const res = await fetch("/videos",{headers:{"Accept":"application/json"}});
+          if(res.ok){ const data=await res.json(); renderLatest(data); }
+        }catch{}
       });
     })();
-  </script>
 
-  <!-- Latest videos -->
-  <script>
+    // Latest videos rendering
     function renderLatest(videos){
-      const box=document.getElementById("latest"); 
+      const box=document.getElementById("latest");
       const status=document.getElementById("latestStatus");
       if(!videos||!videos.length){status.textContent="No uploaded videos yet."; box.innerHTML=""; return;}
       status.textContent="";
@@ -297,13 +372,6 @@
           <h3>${v.title||"Untitled"}</h3>
         </article>`).join("");
     }
-    (async()=>{
-      try{
-        const res=await fetch("/videos",{headers:{"Accept":"application/json"}});
-        if(!res.ok) return;
-        const data=await res.json(); renderLatest(data);
-      }catch{}
-    })();
   </script>
 </body>
 </html>
