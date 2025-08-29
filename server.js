@@ -1,125 +1,145 @@
-// server.js (ESM)
-import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import cors from 'cors';
-import morgan from 'morgan';
-import { expressjwt as jwt } from 'express-jwt';
-import jwksRsa from 'jwks-rsa';
+// server.js (ESM) — PUBLIC BY DEFAULT, AUTH OPTIONAL
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+import cors from "cors";
+import morgan from "morgan";
+import { expressjwt as jwt } from "express-jwt";
+import jwksRsa from "jwks-rsa";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const PUBLIC = path.join(__dirname, 'public');
+const PUBLIC = path.join(__dirname, "public");
 
-// ===== Config =====
-const CLIENT_ID = process.env.CLIENT_ID || ''; // Azure App registration (application) ID
-const TENANT_ID = process.env.TENANT_ID || ''; // Directory (tenant) ID
-const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || '')
-  .split(',')
+// ===== Env & Config =====
+const CLIENT_ID = process.env.CLIENT_ID || "";   // Azure App registration (application) ID
+const TENANT_ID = process.env.TENANT_ID || "";   // Directory (tenant) ID
+
+// If ALLOWED_ORIGINS is empty → allow all (useful for public site)
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
+  .split(",")
   .map(s => s.trim())
   .filter(Boolean);
 
-// Basic guard
-if (!CLIENT_ID || !TENANT_ID) {
-  console.warn('⚠️  Set CLIENT_ID and TENANT_ID env vars for token validation.');
+// Whether auth is enabled
+const hasAuth = Boolean(CLIENT_ID && TENANT_ID);
+if (!hasAuth) {
+  console.warn("⚠️  Running with AUTH DISABLED (public site). Set CLIENT_ID & TENANT_ID to enable auth.");
 }
 
 // ===== Middleware =====
-app.use(morgan('tiny'));
-app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin || ALLOWED_ORIGINS.length === 0 || ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
-    return cb(new Error('CORS not allowed'), false);
-  }
-}));
+app.use(morgan("tiny"));
 app.use(express.json());
 
-// ===== Auth (verify MSAL ID token) =====
-const ISSUER = `https://login.microsoftonline.com/${TENANT_ID}/v2.0`;
-const jwtCheck = jwt({
-  secret: jwksRsa.expressJwtSecret({
-    cache: true,
-    rateLimit: true,
-    jwksRequestsPerMinute: 10,
-    jwksUri: `https://login.microsoftonline.com/${TENANT_ID}/discovery/v2.0/keys`
-  }),
-  audience: CLIENT_ID,
-  issuer: ISSUER,
-  algorithms: ['RS256'],
-  requestProperty: 'auth' // decoded token at req.auth
-});
+// CORS: allow all when no list provided (public), otherwise restrict
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true); // same-origin or curl
+      if (ALLOWED_ORIGINS.length === 0) return cb(null, true);
+      if (ALLOWED_ORIGINS.includes(origin)) return cb(null, true);
+      return cb(new Error("CORS not allowed"), false);
+    },
+    credentials: true
+  })
+);
+
+// ===== Optional Auth (only active when hasAuth = true) =====
+let requireAuth = (_req, _res, next) => next(); // no-op if auth is off
 
 // tiny in-memory role store: sub -> { name, email, role }
 const users = new Map();
 
-// helper: ensure user exists with default role Consumer
 function ensureUser(auth) {
   const sub = auth?.sub;
   if (!sub) return null;
   if (!users.has(sub)) {
     users.set(sub, {
-      name: auth.name || 'User',
-      email: auth.preferred_username || auth.email || '',
-      role: 'Consumer'
+      name: auth.name || "User",
+      email: auth.preferred_username || auth.email || "",
+      role: "Consumer"
     });
   }
   return { sub, ...users.get(sub) };
 }
 
-// ===== Demo video data (in-memory) =====
+if (hasAuth) {
+  const ISSUER = `https://login.microsoftonline.com/${TENANT_ID}/v2.0`;
+  requireAuth = jwt({
+    secret: jwksRsa.expressJwtSecret({
+      cache: true,
+      rateLimit: true,
+      jwksRequestsPerMinute: 10,
+      jwksUri: `https://login.microsoftonline.com/${TENANT_ID}/discovery/v2.0/keys`
+    }),
+    audience: CLIENT_ID,
+    issuer: ISSUER,
+    algorithms: ["RS256"],
+    requestProperty: "auth"
+  });
+}
+
+// ===== Demo data =====
 let videos = [
   {
-    id: '1',
-    title: 'Welcome to aurevo',
-    publisher: 'aurevo',
-    playbackUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    id: "1",
+    title: "Welcome to aurevo",
+    publisher: "aurevo",
+    playbackUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
     createdAt: new Date().toISOString()
   }
 ];
 
 // ===== API =====
 
-// Public: list videos
-app.get('/videos', (req, res) => {
-  res.json(videos);
-});
+// Simple health check
+app.get("/healthz", (_req, res) => res.json({ ok: true }));
 
-// Authenticated: who am I?
-app.get('/me', jwtCheck, (req, res) => {
+// Expose auth status for front-ends to adjust UI
+app.get("/auth/status", (_req, res) => res.json({ hasAuth }));
+
+// PUBLIC: list videos
+app.get("/videos", (_req, res) => res.json(videos));
+
+// Identity endpoint
+// - When auth OFF: return Guest (no login flow)
+// - When auth ON: protected by requireAuth
+app.get("/me", hasAuth ? requireAuth : (_req, res, next) => next(), (req, res) => {
+  if (!hasAuth) return res.json({ user: { name: "Guest", email: "", role: "Consumer" } });
   const u = ensureUser(req.auth);
-  if (!u) return res.status(401).send('unauthorized');
+  if (!u) return res.status(401).send("unauthorized");
   res.json({ user: { name: u.name, email: u.email, role: u.role } });
 });
 
-// Authenticated: switch role
-app.post('/me/role', jwtCheck, (req, res) => {
+// Switch role — only when auth is enabled
+app.post("/me/role", hasAuth ? requireAuth : (_req, res) => res.status(403).send("roles require login"), (req, res) => {
   const u = ensureUser(req.auth);
-  if (!u) return res.status(401).send('unauthorized');
-  const next = (req.body?.role || '').trim();
-  if (!['Creator', 'Consumer'].includes(next)) return res.status(400).send('invalid role');
-  users.set(u.sub, { name: u.name, email: u.email, role: next });
-  res.json({ ok: true, role: next });
+  if (!u) return res.status(401).send("unauthorized");
+  const nextRole = (req.body?.role || "").trim();
+  if (!["Creator", "Consumer"].includes(nextRole)) return res.status(400).send("invalid role");
+  users.set(u.sub, { name: u.name, email: u.email, role: nextRole });
+  res.json({ ok: true, role: nextRole });
 });
 
-// Authenticated + Creator: create video
-app.post('/videos', jwtCheck, (req, res) => {
+// Create video — protected when auth ON; disabled when auth OFF
+app.post("/videos", hasAuth ? requireAuth : (_req, res) => res.status(403).send("upload disabled"), (req, res) => {
   const u = ensureUser(req.auth);
-  if (!u) return res.status(401).send('unauthorized');
-  if (users.get(u.sub).role !== 'Creator') return res.status(403).send('Creators only');
+  if (!u) return res.status(401).send("unauthorized");
+  if (users.get(u.sub).role !== "Creator") return res.status(403).send("Creators only");
 
   const { title, publisher, producer, genre, age, playbackUrl, external } = req.body || {};
-  if (!title || !playbackUrl) return res.status(400).send('Title and playbackUrl required');
+  if (!title || !playbackUrl) return res.status(400).send("Title and playbackUrl required");
   const id = Date.now().toString();
   const v = {
     id,
     title,
-    publisher: publisher || '',
-    producer: producer || '',
-    genre: genre || '',
-    age: age || '',
+    publisher: publisher || "",
+    producer: producer || "",
+    genre: genre || "",
+    age: age || "",
     playbackUrl,
     external: !!external,
     createdAt: new Date().toISOString()
@@ -128,16 +148,13 @@ app.post('/videos', jwtCheck, (req, res) => {
   res.json({ ok: true, id });
 });
 
-// Health
-app.get('/healthz', (_req, res) => res.json({ ok: true }));
-
 // ===== Static front-end =====
-app.use(express.static(PUBLIC, { extensions: ['html'] }));
+app.use(express.static(PUBLIC, { extensions: ["html"] }));
 
 // SPA fallback
-app.get('*', (req, res) => {
-  res.sendFile(path.join(PUBLIC, 'index.html'));
+app.get("*", (_req, res) => {
+  res.sendFile(path.join(PUBLIC, "index.html"));
 });
 
-app.listen(PORT, () => console.log(`aurevo listening on ${PORT}`));
-
+// ===== Start =====
+app.listen(PORT, () => console.log(`aurevo listening on ${PORT} — auth ${hasAuth ? "ENABLED" : "DISABLED"}`));
